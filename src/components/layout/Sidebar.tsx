@@ -15,17 +15,18 @@ import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   className?: string;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, onNavigate }: SidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
   
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
   
@@ -41,10 +42,15 @@ export function Sidebar({ className }: SidebarProps) {
     { icon: FileText, label: 'Orçamentos', path: '/operador/orcamentos' },
   ];
 
+  const handleNavigation = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
+
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen w-64 flex flex-col",
-      "bg-sidebar text-sidebar-foreground",
+      "flex flex-col h-full bg-sidebar text-sidebar-foreground",
       className
     )}>
       {/* Logo */}
@@ -68,6 +74,7 @@ export function Sidebar({ className }: SidebarProps) {
             <Link
               key={item.path}
               to={item.path}
+              onClick={handleNavigation}
               className={cn(
                 "nav-item",
                 isActive && "active"

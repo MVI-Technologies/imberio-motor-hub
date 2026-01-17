@@ -38,14 +38,15 @@ export default function PartsManagementPage() {
   const filteredParts = searchQuery.trim()
     ? parts.filter(p => 
         p.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.tipo.toLowerCase().includes(searchQuery.toLowerCase())
+        p.tipo?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : parts;
 
   // Group parts by type
   const partsByType = filteredParts.reduce((acc, part) => {
-    if (!acc[part.tipo]) acc[part.tipo] = [];
-    acc[part.tipo].push(part);
+    const tipo = part.tipo || 'Sem categoria';
+    if (!acc[tipo]) acc[tipo] = [];
+    acc[tipo].push(part);
     return acc;
   }, {} as Record<string, Part[]>);
 
@@ -54,10 +55,10 @@ export default function PartsManagementPage() {
       setEditingPart(part);
       setFormData({
         nome: part.nome,
-        tipo: part.tipo,
+        tipo: part.tipo || '',
         valor: part.valor.toString(),
-        unidade: part.unidade,
-        observacoes: part.observacoes,
+        unidade: part.unidade || 'un',
+        observacoes: part.observacoes || '',
       });
     } else {
       setEditingPart(null);
@@ -169,7 +170,7 @@ export default function PartsManagementPage() {
                       <td className="text-right font-mono">
                         R$ {part.valor.toFixed(2)}
                       </td>
-                      <td>{part.unidade}</td>
+                      <td>{part.unidade || '-'}</td>
                       <td className="text-muted-foreground text-sm">
                         {part.observacoes || '-'}
                       </td>

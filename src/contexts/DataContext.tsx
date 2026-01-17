@@ -1,59 +1,41 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { 
+  Client, 
+  Part, 
+  Motor, 
+  Budget, 
+  BudgetItem,
+  ClientInsert,
+  ClientUpdate,
+  PartInsert,
+  PartUpdate,
+  MotorInsert,
+  BudgetInsert,
+  BudgetItemInsert,
+  BudgetWithRelations,
+  Profile
+} from '@/lib/database.types';
 
-// Types
-export interface Client {
-  id: string;
-  nome: string;
-  endereco: string;
-  telefone: string;
-  celular: string;
-  observacoes: string;
-  created_at: string;
-}
+// Re-exportar tipos para compatibilidade
+export type { Client, Part, Motor, Budget, BudgetItem };
 
-export interface Motor {
-  id: string;
-  tipo: string;
-  modelo: string;
-  cv: string;
-  tensao: string;
-  rpm: string;
-  fios: string;
-  espiras: string;
-  ligacao: string;
-  diametro_externo: string;
-  comprimento_externo: string;
-  numero_serie: string;
-  marca: string;
-  original: boolean;
-}
-
-export interface Part {
-  id: string;
-  nome: string;
-  tipo: string;
-  valor: number;
-  unidade: string;
-  observacoes: string;
-}
-
-export interface BudgetItem {
-  id: string;
-  part_id: string;
-  part_name: string;
-  quantidade: number;
-  valor_unitario: number;
-  subtotal: number;
-}
-
-export interface Budget {
+// Tipo expandido de Budget para uso na UI
+export interface BudgetExpanded {
   id: string;
   client_id: string;
   client_name: string;
   operador_id: string;
   operador_name: string;
   motor: Motor;
-  items: BudgetItem[];
+  items: {
+    id: string;
+    part_id: string;
+    part_name: string;
+    quantidade: number;
+    valor_unitario: number;
+    subtotal: number;
+  }[];
   data: string;
   valor_total: number;
   laudo_tecnico: string;
@@ -62,114 +44,208 @@ export interface Budget {
 }
 
 interface DataContextType {
+  // Estado
   clients: Client[];
   parts: Part[];
-  budgets: Budget[];
-  addClient: (client: Omit<Client, 'id' | 'created_at'>) => Client;
-  updateClient: (id: string, client: Partial<Client>) => void;
-  deleteClient: (id: string) => void;
+  budgets: BudgetExpanded[];
+  isLoading: boolean;
+  
+  // Clientes
+  addClient: (client: Omit<ClientInsert, 'id' | 'created_at'>) => Promise<Client | null>;
+  updateClient: (id: string, client: ClientUpdate) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
   getClient: (id: string) => Client | undefined;
   searchClients: (query: string) => Client[];
-  addPart: (part: Omit<Part, 'id'>) => Part;
-  updatePart: (id: string, part: Partial<Part>) => void;
-  deletePart: (id: string) => void;
-  addBudget: (budget: Omit<Budget, 'id'>) => Budget;
-  updateBudget: (id: string, budget: Partial<Budget>) => void;
-  getBudgetsByClient: (clientId: string) => Budget[];
-  getBudget: (id: string) => Budget | undefined;
+  refreshClients: () => Promise<void>;
+  
+  // Peças
+  addPart: (part: Omit<PartInsert, 'id' | 'created_at'>) => Promise<Part | null>;
+  updatePart: (id: string, part: PartUpdate) => Promise<void>;
+  deletePart: (id: string) => Promise<void>;
+  refreshParts: () => Promise<void>;
+  
+  // Orçamentos
+  addBudget: (budget: {
+    client_id: string;
+    operador_id: string;
+    motor: Omit<MotorInsert, 'id' | 'created_at'>;
+    items: { part_id: string; quantidade: number; valor_unitario: number }[];
+    valor_total: number;
+    laudo_tecnico?: string;
+    observacoes?: string;
+    status?: 'pendente' | 'aprovado' | 'concluido';
+  }) => Promise<BudgetExpanded | null>;
+  updateBudget: (id: string, budget: Partial<BudgetExpanded>) => Promise<void>;
+  getBudgetsByClient: (clientId: string) => BudgetExpanded[];
+  getBudget: (id: string) => BudgetExpanded | undefined;
+  refreshBudgets: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Initial mock data
-const INITIAL_PARTS: Part[] = [
-  { id: '1', nome: 'Rolamento 6205', tipo: 'Rolamento', valor: 45.00, unidade: 'un', observacoes: '' },
-  { id: '2', nome: 'Rolamento 6206', tipo: 'Rolamento', valor: 52.00, unidade: 'un', observacoes: '' },
-  { id: '3', nome: 'Rolamento 6207', tipo: 'Rolamento', valor: 68.00, unidade: 'un', observacoes: '' },
-  { id: '4', nome: 'Selo Mecânico 1"', tipo: 'Selo', valor: 85.00, unidade: 'un', observacoes: '' },
-  { id: '5', nome: 'Selo Mecânico 1.1/4"', tipo: 'Selo', valor: 95.00, unidade: 'un', observacoes: '' },
-  { id: '6', nome: 'Capacitor 10uF', tipo: 'Capacitor', valor: 35.00, unidade: 'un', observacoes: '' },
-  { id: '7', nome: 'Capacitor 20uF', tipo: 'Capacitor', valor: 42.00, unidade: 'un', observacoes: '' },
-  { id: '8', nome: 'Capacitor 30uF', tipo: 'Capacitor', valor: 48.00, unidade: 'un', observacoes: '' },
-  { id: '9', nome: 'Ventoinha 140mm', tipo: 'Ventoinha', valor: 55.00, unidade: 'un', observacoes: '' },
-  { id: '10', nome: 'Ventoinha 160mm', tipo: 'Ventoinha', valor: 65.00, unidade: 'un', observacoes: '' },
-  { id: '11', nome: 'Tampa Traseira', tipo: 'Tampa', valor: 120.00, unidade: 'un', observacoes: '' },
-  { id: '12', nome: 'Tampa Dianteira', tipo: 'Tampa', valor: 130.00, unidade: 'un', observacoes: '' },
-  { id: '13', nome: 'Vedação Oring', tipo: 'Vedação', valor: 12.00, unidade: 'un', observacoes: '' },
-  { id: '14', nome: 'Flange', tipo: 'Flange', valor: 180.00, unidade: 'un', observacoes: '' },
-  { id: '15', nome: 'Rotor', tipo: 'Rotor', valor: 350.00, unidade: 'un', observacoes: '' },
-  { id: '16', nome: 'Centrífugo', tipo: 'Centrífugo', valor: 95.00, unidade: 'un', observacoes: '' },
-  { id: '17', nome: 'Caixa de Ligação', tipo: 'Caixa', valor: 75.00, unidade: 'un', observacoes: '' },
-  { id: '18', nome: 'Mão de Obra - Simples', tipo: 'Serviço', valor: 150.00, unidade: 'serv', observacoes: '' },
-  { id: '19', nome: 'Mão de Obra - Complexa', tipo: 'Serviço', valor: 280.00, unidade: 'serv', observacoes: '' },
-  { id: '20', nome: 'Torno', tipo: 'Serviço', valor: 200.00, unidade: 'serv', observacoes: '' },
-  { id: '21', nome: 'Reforma Completa', tipo: 'Serviço', valor: 500.00, unidade: 'serv', observacoes: '' },
-  { id: '22', nome: 'Rebobinagem', tipo: 'Serviço', valor: 400.00, unidade: 'serv', observacoes: '' },
-];
-
-const INITIAL_CLIENTS: Client[] = [
-  { id: '1', nome: 'Indústria ABC Ltda', endereco: 'Rua Industrial, 500 - Distrito Industrial', telefone: '(11) 3333-4444', celular: '(11) 99999-8888', observacoes: 'Cliente desde 2020', created_at: '2024-01-15' },
-  { id: '2', nome: 'Fazenda São João', endereco: 'Estrada Rural, Km 15', telefone: '(11) 3333-5555', celular: '(11) 99999-7777', observacoes: 'Bombas de irrigação', created_at: '2024-02-20' },
-  { id: '3', nome: 'Metalúrgica Progresso', endereco: 'Av. das Indústrias, 1200', telefone: '(11) 3333-6666', celular: '(11) 99999-6666', observacoes: '', created_at: '2024-03-10' },
-];
-
-const INITIAL_BUDGETS: Budget[] = [
-  {
-    id: '1',
-    client_id: '1',
-    client_name: 'Indústria ABC Ltda',
-    operador_id: '2',
-    operador_name: 'Operador João',
-    motor: {
-      id: 'm1',
-      tipo: 'Trifásico',
-      modelo: 'WEG W22',
-      cv: '5',
-      tensao: '220/380V',
-      rpm: '1750',
-      fios: '6',
-      espiras: '45',
-      ligacao: 'Estrela',
-      diametro_externo: '120mm',
-      comprimento_externo: '280mm',
-      numero_serie: 'WEG-2024-001',
-      marca: 'WEG',
-      original: true,
-    },
-    items: [
-      { id: 'i1', part_id: '1', part_name: 'Rolamento 6205', quantidade: 2, valor_unitario: 45.00, subtotal: 90.00 },
-      { id: 'i2', part_id: '18', part_name: 'Mão de Obra - Simples', quantidade: 1, valor_unitario: 150.00, subtotal: 150.00 },
-    ],
-    data: '2024-12-10',
-    valor_total: 240.00,
-    laudo_tecnico: 'Motor apresentou aquecimento excessivo. Rolamentos desgastados.',
-    observacoes: '',
-    status: 'concluido',
-  },
-];
-
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
-  const [parts, setParts] = useState<Part[]>(INITIAL_PARTS);
-  const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
+  const [budgets, setBudgets] = useState<BudgetExpanded[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  // ========== FETCH FUNCTIONS ==========
+  
+  const fetchClients = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .order('nome');
+    
+    if (error) {
+      console.error('Erro ao buscar clientes:', error);
+      return;
+    }
+    
+    setClients(data || []);
+  }, []);
 
-  const addClient = (clientData: Omit<Client, 'id' | 'created_at'>): Client => {
-    const newClient: Client = {
-      ...clientData,
-      id: generateId(),
-      created_at: new Date().toISOString().split('T')[0],
+  const fetchParts = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('parts')
+      .select('*')
+      .order('nome');
+    
+    if (error) {
+      console.error('Erro ao buscar peças:', error);
+      return;
+    }
+    
+    setParts(data || []);
+  }, []);
+
+  const fetchBudgets = useCallback(async () => {
+    // Buscar orçamentos com relacionamentos
+    const { data: budgetsData, error: budgetsError } = await supabase
+      .from('budgets')
+      .select(`
+        *,
+        client:clients(*),
+        operador:profiles(*),
+        motor:motors(*)
+      `)
+      .order('data', { ascending: false });
+
+    if (budgetsError) {
+      console.error('Erro ao buscar orçamentos:', budgetsError);
+      return;
+    }
+
+    // Buscar itens de cada orçamento
+    const expandedBudgets: BudgetExpanded[] = [];
+    
+    for (const budget of budgetsData || []) {
+      const { data: itemsData } = await supabase
+        .from('budget_items')
+        .select(`
+          *,
+          part:parts(*)
+        `)
+        .eq('budget_id', budget.id);
+
+      const items = (itemsData || []).map(item => ({
+        id: item.id,
+        part_id: item.part_id || '',
+        part_name: item.part?.nome || 'Peça não encontrada',
+        quantidade: item.quantidade,
+        valor_unitario: Number(item.valor_unitario),
+        subtotal: Number(item.subtotal),
+      }));
+
+      expandedBudgets.push({
+        id: budget.id,
+        client_id: budget.client_id || '',
+        client_name: budget.client?.nome || 'Cliente não encontrado',
+        operador_id: budget.operador_id || '',
+        operador_name: budget.operador?.name || 'Operador não encontrado',
+        motor: budget.motor || {
+          id: '',
+          tipo: null,
+          modelo: null,
+          cv: null,
+          tensao: null,
+          rpm: null,
+          espiras: null,
+          fios: null,
+          ligacao: null,
+          diametro_externo: null,
+          comprimento_externo: null,
+          numero_serie: null,
+          marca: null,
+          original: null,
+          created_at: '',
+        },
+        items,
+        data: budget.data,
+        valor_total: Number(budget.valor_total) || 0,
+        laudo_tecnico: budget.laudo_tecnico || '',
+        observacoes: budget.observacoes || '',
+        status: budget.status || 'pendente',
+      });
+    }
+
+    setBudgets(expandedBudgets);
+  }, []);
+
+  // Carrega dados iniciais
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchClients(), fetchParts(), fetchBudgets()]);
+      setIsLoading(false);
     };
-    setClients(prev => [...prev, newClient]);
-    return newClient;
+    
+    loadData();
+  }, [fetchClients, fetchParts, fetchBudgets]);
+
+  // ========== CLIENTS ==========
+
+  const addClient = async (clientData: Omit<ClientInsert, 'id' | 'created_at'>): Promise<Client | null> => {
+    const { data, error } = await supabase
+      .from('clients')
+      .insert(clientData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar cliente:', error);
+      return null;
+    }
+
+    setClients(prev => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+    return data;
   };
 
-  const updateClient = (id: string, clientData: Partial<Client>) => {
+  const updateClient = async (id: string, clientData: ClientUpdate) => {
+    const { error } = await supabase
+      .from('clients')
+      .update(clientData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      return;
+    }
+
     setClients(prev => prev.map(c => c.id === id ? { ...c, ...clientData } : c));
   };
 
-  const deleteClient = (id: string) => {
+  const deleteClient = async (id: string) => {
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao deletar cliente:', error);
+      return;
+    }
+
     setClients(prev => prev.filter(c => c.id !== id));
   };
 
@@ -180,32 +256,184 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const lowerQuery = query.toLowerCase();
     return clients.filter(c => 
       c.nome.toLowerCase().includes(lowerQuery) ||
-      c.telefone.includes(query) ||
-      c.celular.includes(query)
+      c.telefone?.includes(query) ||
+      c.celular?.includes(query)
     );
   };
 
-  const addPart = (partData: Omit<Part, 'id'>): Part => {
-    const newPart: Part = { ...partData, id: generateId() };
-    setParts(prev => [...prev, newPart]);
-    return newPart;
+  const refreshClients = async () => {
+    await fetchClients();
   };
 
-  const updatePart = (id: string, partData: Partial<Part>) => {
+  // ========== PARTS ==========
+
+  const addPart = async (partData: Omit<PartInsert, 'id' | 'created_at'>): Promise<Part | null> => {
+    const { data, error } = await supabase
+      .from('parts')
+      .insert(partData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao adicionar peça:', error);
+      return null;
+    }
+
+    setParts(prev => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+    return data;
+  };
+
+  const updatePart = async (id: string, partData: PartUpdate) => {
+    const { error } = await supabase
+      .from('parts')
+      .update(partData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao atualizar peça:', error);
+      return;
+    }
+
     setParts(prev => prev.map(p => p.id === id ? { ...p, ...partData } : p));
   };
 
-  const deletePart = (id: string) => {
+  const deletePart = async (id: string) => {
+    const { error } = await supabase
+      .from('parts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao deletar peça:', error);
+      return;
+    }
+
     setParts(prev => prev.filter(p => p.id !== id));
   };
 
-  const addBudget = (budgetData: Omit<Budget, 'id'>): Budget => {
-    const newBudget: Budget = { ...budgetData, id: generateId() };
-    setBudgets(prev => [...prev, newBudget]);
-    return newBudget;
+  const refreshParts = async () => {
+    await fetchParts();
   };
 
-  const updateBudget = (id: string, budgetData: Partial<Budget>) => {
+  // ========== BUDGETS ==========
+
+  const addBudget = async (budgetData: {
+    client_id: string;
+    operador_id: string;
+    motor: Omit<MotorInsert, 'id' | 'created_at'>;
+    items: { part_id: string; quantidade: number; valor_unitario: number }[];
+    valor_total: number;
+    laudo_tecnico?: string;
+    observacoes?: string;
+    status?: 'pendente' | 'aprovado' | 'concluido';
+  }): Promise<BudgetExpanded | null> => {
+    // 1. Criar o motor primeiro
+    const { data: motorData, error: motorError } = await supabase
+      .from('motors')
+      .insert(budgetData.motor)
+      .select()
+      .single();
+
+    if (motorError || !motorData) {
+      console.error('Erro ao criar motor:', motorError);
+      return null;
+    }
+
+    // 2. Criar o orçamento
+    const { data: budgetResult, error: budgetError } = await supabase
+      .from('budgets')
+      .insert({
+        client_id: budgetData.client_id,
+        operador_id: budgetData.operador_id,
+        motor_id: motorData.id,
+        valor_total: budgetData.valor_total,
+        laudo_tecnico: budgetData.laudo_tecnico,
+        observacoes: budgetData.observacoes,
+        status: budgetData.status || 'pendente',
+      })
+      .select()
+      .single();
+
+    if (budgetError || !budgetResult) {
+      console.error('Erro ao criar orçamento:', budgetError);
+      return null;
+    }
+
+    // 3. Criar os itens do orçamento
+    const itemsToInsert = budgetData.items.map(item => ({
+      budget_id: budgetResult.id,
+      part_id: item.part_id,
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario,
+    }));
+
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('budget_items')
+      .insert(itemsToInsert)
+      .select(`
+        *,
+        part:parts(*)
+      `);
+
+    if (itemsError) {
+      console.error('Erro ao criar itens:', itemsError);
+    }
+
+    // 4. Buscar dados relacionados para montar o objeto expandido
+    const client = clients.find(c => c.id === budgetData.client_id);
+    
+    const { data: operador } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', budgetData.operador_id)
+      .single();
+
+    const expandedBudget: BudgetExpanded = {
+      id: budgetResult.id,
+      client_id: budgetData.client_id,
+      client_name: client?.nome || 'Cliente não encontrado',
+      operador_id: budgetData.operador_id,
+      operador_name: operador?.name || 'Operador não encontrado',
+      motor: motorData,
+      items: (itemsData || []).map(item => ({
+        id: item.id,
+        part_id: item.part_id || '',
+        part_name: item.part?.nome || 'Peça não encontrada',
+        quantidade: item.quantidade,
+        valor_unitario: Number(item.valor_unitario),
+        subtotal: Number(item.subtotal),
+      })),
+      data: budgetResult.data,
+      valor_total: budgetData.valor_total,
+      laudo_tecnico: budgetData.laudo_tecnico || '',
+      observacoes: budgetData.observacoes || '',
+      status: budgetData.status || 'pendente',
+    };
+
+    setBudgets(prev => [expandedBudget, ...prev]);
+    return expandedBudget;
+  };
+
+  const updateBudget = async (id: string, budgetData: Partial<BudgetExpanded>) => {
+    const updateData: Record<string, unknown> = {};
+    
+    if (budgetData.valor_total !== undefined) updateData.valor_total = budgetData.valor_total;
+    if (budgetData.laudo_tecnico !== undefined) updateData.laudo_tecnico = budgetData.laudo_tecnico;
+    if (budgetData.observacoes !== undefined) updateData.observacoes = budgetData.observacoes;
+    if (budgetData.status !== undefined) updateData.status = budgetData.status;
+
+    if (Object.keys(updateData).length > 0) {
+      const { error } = await supabase
+        .from('budgets')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao atualizar orçamento:', error);
+        return;
+      }
+    }
+
     setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...budgetData } : b));
   };
 
@@ -213,23 +441,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const getBudget = (id: string) => budgets.find(b => b.id === id);
 
+  const refreshBudgets = async () => {
+    await fetchBudgets();
+  };
+
   return (
     <DataContext.Provider value={{
       clients,
       parts,
       budgets,
+      isLoading,
       addClient,
       updateClient,
       deleteClient,
       getClient,
       searchClients,
+      refreshClients,
       addPart,
       updatePart,
       deletePart,
+      refreshParts,
       addBudget,
       updateBudget,
       getBudgetsByClient,
       getBudget,
+      refreshBudgets,
     }}>
       {children}
     </DataContext.Provider>

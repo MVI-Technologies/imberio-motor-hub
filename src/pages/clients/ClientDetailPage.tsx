@@ -162,7 +162,7 @@ export default function ClientDetailPage() {
                       </span>
                     </div>
                     <p className="font-medium">
-                      {budget.motor.marca} {budget.motor.modelo} - {budget.motor.cv} CV
+                      {budget.motor?.marca || ''} {budget.motor?.modelo || ''} - {budget.motor?.cv || '-'} CV
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(budget.data).toLocaleDateString('pt-BR')}

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useData, Motor, BudgetItem } from '@/contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
+import type { MotorInsert } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,8 +34,7 @@ export default function NewBudgetPage() {
   
   const client = getClient(clientId || '');
   
-  const [motorData, setMotorData] = useState<Motor>({
-    id: '',
+  const [motorData, setMotorData] = useState<Omit<MotorInsert, 'id' | 'created_at'>>({
     tipo: '',
     modelo: '',
     cv: '',
@@ -52,7 +52,17 @@ export default function NewBudgetPage() {
   
   const [laudoTecnico, setLaudoTecnico] = useState('');
   const [observacoes, setObservacoes] = useState('');
-  const [selectedItems, setSelectedItems] = useState<BudgetItem[]>([]);
+  
+  interface LocalBudgetItem {
+    id: string;
+    part_id: string;
+    part_name: string;
+    quantidade: number;
+    valor_unitario: number;
+    subtotal: number;
+  }
+  
+  const [selectedItems, setSelectedItems] = useState<LocalBudgetItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!client) {
@@ -69,7 +79,7 @@ export default function NewBudgetPage() {
     );
   }
 
-  const handleMotorChange = (field: keyof Motor, value: string | boolean) => {
+  const handleMotorChange = (field: keyof Omit<MotorInsert, 'id' | 'created_at'>, value: string | boolean | null) => {
     setMotorData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -85,13 +95,13 @@ export default function NewBudgetPage() {
           : item
       ));
     } else {
-      const newItem: BudgetItem = {
+      const newItem: LocalBudgetItem = {
         id: Math.random().toString(36).substr(2, 9),
         part_id: part.id,
         part_name: part.nome,
         quantidade: 1,
-        valor_unitario: part.valor,
-        subtotal: part.valor,
+        valor_unitario: Number(part.valor),
+        subtotal: Number(part.valor),
       };
       setSelectedItems(prev => [...prev, newItem]);
     }
@@ -125,36 +135,41 @@ export default function NewBudgetPage() {
     
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newBudget = addBudget({
+    const newBudget = await addBudget({
       client_id: client.id,
-      client_name: client.nome,
       operador_id: user?.id || '',
-      operador_name: user?.name || '',
-      motor: { ...motorData, id: Math.random().toString(36).substr(2, 9) },
-      items: selectedItems,
-      data: new Date().toISOString().split('T')[0],
+      motor: motorData,
+      items: selectedItems.map(item => ({
+        part_id: item.part_id,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+      })),
       valor_total: totalValue,
       laudo_tecnico: laudoTecnico,
       observacoes,
       status: 'pendente',
     });
     
-    toast.success('Orçamento criado com sucesso!', {
-      description: `Valor total: R$ ${totalValue.toFixed(2)}`,
-      icon: <CheckCircle className="w-5 h-5 text-success" />,
-    });
+    if (newBudget) {
+      toast.success('Orçamento criado com sucesso!', {
+        description: `Valor total: R$ ${totalValue.toFixed(2)}`,
+        icon: <CheckCircle className="w-5 h-5 text-success" />,
+      });
+      navigate(`${basePath}/clientes/${client.id}`);
+    } else {
+      toast.error('Erro ao criar orçamento', {
+        description: 'Tente novamente.',
+      });
+    }
     
     setIsSubmitting(false);
-    navigate(`${basePath}/clientes/${client.id}`);
   };
 
   // Group parts by type
   const partsByType = parts.reduce((acc, part) => {
-    if (!acc[part.tipo]) acc[part.tipo] = [];
-    acc[part.tipo].push(part);
+    const tipo = part.tipo || 'Sem categoria';
+    if (!acc[tipo]) acc[tipo] = [];
+    acc[tipo].push(part);
     return acc;
   }, {} as Record<string, typeof parts>);
 

@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Profile } from '@/lib/database.types';
 
 export type UserRole = 'admin' | 'operador';
 
@@ -12,67 +15,129 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ error?: string }>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ error?: string; user?: User }>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo - will be replaced by Supabase Auth
-const MOCK_USERS: User[] = [
-  { id: '1', name: 'Administrador', email: 'admin@imberio.com', role: 'admin' },
-  { id: '2', name: 'Operador João', email: 'operador@imberio.com', role: 'operador' },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('imberio_user');
-    const tokenExpiry = localStorage.getItem('imberio_token_expiry');
-    
-    if (storedUser && tokenExpiry) {
-      const expiryTime = parseInt(tokenExpiry, 10);
-      if (Date.now() < expiryTime) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        // Token expired
-        localStorage.removeItem('imberio_user');
-        localStorage.removeItem('imberio_token_expiry');
+  // Busca o perfil do usuário no banco
+  const fetchProfile = useCallback(async (supabaseUser: SupabaseUser): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Erro ao buscar perfil:', error);
+        return null;
       }
+
+      if (!data) {
+        console.log('Perfil não encontrado para:', supabaseUser.id);
+        return null;
+      }
+
+      const profile = data as Profile;
+
+      return {
+        id: profile.id,
+        name: profile.name,
+        email: supabaseUser.email || '',
+        role: profile.role as UserRole,
+      };
+    } catch (err) {
+      console.error('Exceção ao buscar perfil:', err);
+      return null;
     }
-    setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ error?: string }> => {
-    setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock authentication - replace with Supabase Auth
-    const foundUser = MOCK_USERS.find(u => u.email === email);
-    
-    if (foundUser && password === '123456') {
-      // Set 15 hour token expiry
-      const expiryTime = Date.now() + (15 * 60 * 60 * 1000);
-      localStorage.setItem('imberio_user', JSON.stringify(foundUser));
-      localStorage.setItem('imberio_token_expiry', expiryTime.toString());
-      setUser(foundUser);
-      setIsLoading(false);
-      return {};
+  // Inicializa a sessão apenas uma vez
+  useEffect(() => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && mounted) {
+          const userProfile = await fetchProfile(session.user);
+          if (mounted) {
+            setUser(userProfile);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar auth:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Listener simplificado - só para logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' && mounted) {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+
+  const login = async (email: string, password: string): Promise<{ error?: string; user?: User }> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        const errorMessages: Record<string, string> = {
+          'Invalid login credentials': 'E-mail ou senha inválidos. Verifique suas credenciais.',
+          'Email not confirmed': 'E-mail não confirmado. Verifique sua caixa de entrada.',
+          'User not found': 'Usuário não encontrado. Verifique o e-mail digitado.',
+          'Invalid email': 'E-mail inválido. Digite um e-mail válido.',
+          'Password is too short': 'Senha muito curta. A senha deve ter pelo menos 6 caracteres.',
+        };
+        return { error: errorMessages[error.message] || `Erro: ${error.message}` };
+      }
+
+      if (data.user) {
+        const userProfile = await fetchProfile(data.user);
+        
+        if (!userProfile) {
+          await supabase.auth.signOut();
+          return { error: 'Usuário não cadastrado no sistema. Entre em contato com o administrador.' };
+        }
+        
+        setUser(userProfile);
+        return { user: userProfile };
+      }
+
+      return { error: 'Erro inesperado no login.' };
+    } catch (error: any) {
+      if (error?.message?.includes('fetch') || error?.name === 'TypeError') {
+        return { error: 'Erro de conexão. Verifique sua internet e tente novamente.' };
+      }
+      return { error: 'Erro ao fazer login. Tente novamente.' };
     }
-    
-    setIsLoading(false);
-    return { error: 'E-mail ou senha inválidos' };
   };
 
-  const logout = () => {
-    localStorage.removeItem('imberio_user');
-    localStorage.removeItem('imberio_token_expiry');
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 

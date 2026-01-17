@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                     <tr key={budget.id}>
                       <td className="font-medium">{budget.client_name}</td>
                       <td className="text-muted-foreground">
-                        {budget.motor.marca} {budget.motor.modelo}
+                        {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
                       </td>
                       <td className="font-mono">
                         R$ {budget.valor_total.toFixed(2)}

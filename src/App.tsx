@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,11 +23,21 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const [showLoading, setShowLoading] = useState(true);
+
+  // Timeout para não ficar travado no loading
+  useEffect(() => {
+    const timer = setTimeout(() => setShowLoading(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
   
-  if (isLoading) {
+  if (isLoading && showLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="spinner" />
+        <div className="text-center">
+          <div className="spinner mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }

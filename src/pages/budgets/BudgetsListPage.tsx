@@ -33,8 +33,8 @@ export default function BudgetsListPage() {
     const query = searchQuery.toLowerCase();
     filteredBudgets = filteredBudgets.filter(b => 
       b.client_name.toLowerCase().includes(query) ||
-      b.motor.marca.toLowerCase().includes(query) ||
-      b.motor.modelo.toLowerCase().includes(query)
+      b.motor?.marca?.toLowerCase().includes(query) ||
+      b.motor?.modelo?.toLowerCase().includes(query)
     );
   }
   
@@ -101,7 +101,7 @@ export default function BudgetsListPage() {
                   </td>
                   <td className="font-medium">{budget.client_name}</td>
                   <td className="text-muted-foreground">
-                    {budget.motor.marca} {budget.motor.modelo}
+                    {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
                   </td>
                   <td className="text-muted-foreground">
                     {new Date(budget.data).toLocaleDateString('pt-BR')}

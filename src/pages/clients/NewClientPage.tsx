@@ -37,18 +37,21 @@ export default function NewClientPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const newClient = await addClient(formData);
     
-    const newClient = addClient(formData);
-    
-    toast.success('Cliente cadastrado com sucesso!', {
-      description: `${newClient.nome} foi adicionado ao sistema.`,
-      icon: <CheckCircle className="w-5 h-5 text-success" />,
-    });
+    if (newClient) {
+      toast.success('Cliente cadastrado com sucesso!', {
+        description: `${newClient.nome} foi adicionado ao sistema.`,
+        icon: <CheckCircle className="w-5 h-5 text-success" />,
+      });
+      navigate(`${basePath}/clientes/${newClient.id}`);
+    } else {
+      toast.error('Erro ao cadastrar cliente', {
+        description: 'Tente novamente.',
+      });
+    }
     
     setIsSubmitting(false);
-    navigate(`${basePath}/clientes/${newClient.id}`);
   };
 
   return (

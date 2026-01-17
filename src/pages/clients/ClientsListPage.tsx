@@ -26,8 +26,8 @@ export default function ClientsListPage() {
   const filteredClients = searchQuery.trim()
     ? clients.filter(c => 
         c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.telefone.includes(searchQuery) ||
-        c.celular.includes(searchQuery)
+        c.telefone?.includes(searchQuery) ||
+        c.celular?.includes(searchQuery)
       )
     : clients;
 

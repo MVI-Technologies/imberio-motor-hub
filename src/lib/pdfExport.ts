@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Budget, Client } from '@/contexts/DataContext';
+import type { BudgetExpanded, Client } from '@/contexts/DataContext';
 
 // Extend jsPDF type to include lastAutoTable
 declare module 'jspdf' {
@@ -12,7 +12,7 @@ declare module 'jspdf' {
 const COMPANY_NAME = 'Imberio Registros';
 const COMPANY_SUBTITLE = 'Sistema de Gestão de Motores Elétricos e Orçamentos Técnicos';
 
-export function exportBudgetToPDF(budget: Budget) {
+export function exportBudgetToPDF(budget: BudgetExpanded) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
@@ -54,14 +54,15 @@ export function exportBudgetToPDF(budget: Budget) {
   doc.text('Dados Técnicos do Motor', 20, yPos);
   
   yPos += 5;
+  const motor = budget.motor;
   const motorData = [
-    ['Tipo', budget.motor.tipo, 'Modelo', budget.motor.modelo],
-    ['CV', budget.motor.cv, 'Tensão', budget.motor.tensao],
-    ['RPM', budget.motor.rpm, 'Nº Fios', budget.motor.fios],
-    ['Espiras', budget.motor.espiras, 'Ligação', budget.motor.ligacao],
-    ['Diâm. Externo', budget.motor.diametro_externo, 'Comp. Externo', budget.motor.comprimento_externo],
-    ['Nº Série', budget.motor.numero_serie, 'Marca', budget.motor.marca],
-    ['Original', budget.motor.original ? 'Sim' : 'Não', '', ''],
+    ['Tipo', motor?.tipo || '-', 'Modelo', motor?.modelo || '-'],
+    ['CV', motor?.cv || '-', 'Tensão', motor?.tensao || '-'],
+    ['RPM', motor?.rpm || '-', 'Nº Fios', motor?.fios || '-'],
+    ['Espiras', motor?.espiras || '-', 'Ligação', motor?.ligacao || '-'],
+    ['Diâm. Externo', motor?.diametro_externo || '-', 'Comp. Externo', motor?.comprimento_externo || '-'],
+    ['Nº Série', motor?.numero_serie || '-', 'Marca', motor?.marca || '-'],
+    ['Original', motor?.original ? 'Sim' : 'Não', '', ''],
   ];
   
   autoTable(doc, {
@@ -146,7 +147,7 @@ export function exportBudgetToPDF(budget: Budget) {
   doc.save(`orcamento_${budget.id}_${budget.client_name.replace(/\s+/g, '_')}.pdf`);
 }
 
-export function exportClientToPDF(client: Client, budgets: Budget[]) {
+export function exportClientToPDF(client: Client, budgets: BudgetExpanded[]) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
@@ -179,9 +180,9 @@ export function exportClientToPDF(client: Client, budgets: Budget[]) {
   doc.setFont('helvetica', 'normal');
   
   const clientInfo = [
-    ['Endereço', client.endereco],
-    ['Telefone', client.telefone],
-    ['Celular', client.celular],
+    ['Endereço', client.endereco || '-'],
+    ['Telefone', client.telefone || '-'],
+    ['Celular', client.celular || '-'],
     ['Data de Cadastro', new Date(client.created_at).toLocaleDateString('pt-BR')],
     ['Observações', client.observacoes || '-'],
   ];
@@ -210,7 +211,7 @@ export function exportClientToPDF(client: Client, budgets: Budget[]) {
     const budgetData = budgets.map(b => [
       `#${b.id.toUpperCase().substring(0, 6)}`,
       new Date(b.data).toLocaleDateString('pt-BR'),
-      `${b.motor.marca} ${b.motor.modelo}`,
+      `${b.motor?.marca || ''} ${b.motor?.modelo || ''}`.trim() || '-',
       `R$ ${b.valor_total.toFixed(2)}`,
       b.status === 'concluido' ? 'Concluído' : b.status === 'aprovado' ? 'Aprovado' : 'Pendente',
     ]);

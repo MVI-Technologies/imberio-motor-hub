@@ -21,14 +21,20 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     
-    const result = await login(email, password);
-    
-    if (result.error) {
-      setError(result.error);
+    try {
+      const result = await login(email, password);
+      
+      if (result.error) {
+        setError(result.error);
+      } else if (result.user) {
+        // Redirecionar baseado no role do usuário
+        const redirectPath = result.user.role === 'admin' ? '/admin' : '/operador';
+        navigate(redirectPath, { replace: true });
+      }
+    } catch (err) {
+      setError('Erro inesperado. Tente novamente.');
+    } finally {
       setIsLoading(false);
-    } else {
-      // Redirect based on role - handled in App.tsx
-      navigate('/');
     }
   };
 
@@ -158,25 +164,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-          
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-sm font-medium text-muted-foreground mb-3">Credenciais de demonstração:</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Admin:</span>
-                <span className="font-mono text-foreground">admin@imberio.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Operador:</span>
-                <span className="font-mono text-foreground">operador@imberio.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Senha:</span>
-                <span className="font-mono text-foreground">123456</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

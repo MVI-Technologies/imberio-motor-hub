@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { useData, Client } from '@/contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
+import type { Client } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -111,14 +112,14 @@ export default function OperatorDashboard() {
                         <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4" />
-                            <span>{client.endereco}</span>
+                            <span>{client.endereco || '-'}</span>
                           </div>
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                               <Phone className="w-4 h-4" />
-                              <span>{client.telefone}</span>
+                              <span>{client.telefone || client.celular || '-'}</span>
                             </div>
-                            {client.celular && (
+                            {client.celular && client.telefone && (
                               <span>{client.celular}</span>
                             )}
                           </div>
