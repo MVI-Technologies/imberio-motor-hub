@@ -6,7 +6,6 @@ import {
   Users, 
   FileText, 
   Package, 
-  Settings, 
   LogOut,
   Cog,
   ChevronRight
@@ -35,7 +34,6 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     { icon: Users, label: 'Clientes', path: '/admin/clientes' },
     { icon: FileText, label: 'Orçamentos', path: '/admin/orcamentos' },
     { icon: Package, label: 'Peças', path: '/admin/pecas' },
-    { icon: Settings, label: 'Usuários', path: '/admin/usuarios' },
   ] : [
     { icon: LayoutDashboard, label: 'Início', path: '/operador' },
     { icon: Users, label: 'Clientes', path: '/operador/clientes' },
