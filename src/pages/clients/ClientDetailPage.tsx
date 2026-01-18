@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   FileText, 
@@ -12,7 +14,10 @@ import {
   MapPin,
   Calendar,
   Edit,
-  ChevronRight
+  ChevronRight,
+  Trash2,
+  X,
+  Save
 } from 'lucide-react';
 import { exportClientToPDF, exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
 import {
@@ -21,11 +26,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getClient, getBudgetsByClient } = useData();
+  const { getClient, getBudgetsByClient, updateClient, deleteClient } = useData();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
@@ -33,6 +50,47 @@ export default function ClientDetailPage() {
   
   const client = getClient(id || '');
   const budgets = getBudgetsByClient(id || '');
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [editData, setEditData] = useState({
+    nome: client?.nome || '',
+    endereco: client?.endereco || '',
+    telefone: client?.telefone || '',
+    celular: client?.celular || '',
+    observacoes: client?.observacoes || '',
+  });
+
+  const handleEdit = () => {
+    setEditData({
+      nome: client?.nome || '',
+      endereco: client?.endereco || '',
+      telefone: client?.telefone || '',
+      celular: client?.celular || '',
+      observacoes: client?.observacoes || '',
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!client) return;
+    await updateClient(client.id, editData);
+    setIsEditing(false);
+    toast.success('Cliente atualizado com sucesso!');
+  };
+
+  const handleDelete = async () => {
+    if (!client) return;
+    setIsDeleting(true);
+    await deleteClient(client.id);
+    setIsDeleting(false);
+    toast.success('Cliente excluído com sucesso!');
+    navigate(`${basePath}/clientes`);
+  };
 
   if (!client) {
     return (
@@ -88,56 +146,146 @@ export default function ClientDetailPage() {
         {/* Client Info */}
         <div className="card-industrial">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Informações</h3>
-            {isAdmin && (
-              <Button variant="ghost" size="sm">
-                <Edit className="w-4 h-4" />
-              </Button>
+            <h3 className="text-lg font-semibold">
+              {isEditing ? 'Editar Cliente' : 'Informações'}
+            </h3>
+            {isAdmin && !isEditing && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={handleEdit}>
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Cliente</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o cliente "{client.nome}"? 
+                        {budgets.length > 0 && (
+                          <span className="block mt-2 text-destructive font-medium">
+                            Atenção: Este cliente possui {budgets.length} orçamento(s) vinculado(s).
+                          </span>
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Excluindo...' : 'Excluir'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+            {isEditing && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                  <X className="w-4 h-4" />
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit} className="btn-industrial-accent">
+                  <Save className="w-4 h-4" />
+                </Button>
+              </div>
             )}
           </div>
           
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+          {isEditing ? (
+            <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Endereço</p>
-                <p className="font-medium">{client.endereco || '-'}</p>
+                <label className="text-sm text-muted-foreground">Nome</label>
+                <Input
+                  value={editData.nome}
+                  onChange={(e) => setEditData(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="Nome do cliente"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Endereço</label>
+                <Input
+                  value={editData.endereco}
+                  onChange={(e) => setEditData(prev => ({ ...prev, endereco: e.target.value }))}
+                  placeholder="Endereço"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Telefone</label>
+                <Input
+                  value={editData.telefone}
+                  onChange={(e) => setEditData(prev => ({ ...prev, telefone: e.target.value }))}
+                  placeholder="Telefone"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Celular</label>
+                <Input
+                  value={editData.celular}
+                  onChange={(e) => setEditData(prev => ({ ...prev, celular: e.target.value }))}
+                  placeholder="Celular"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Observações</label>
+                <Textarea
+                  value={editData.observacoes}
+                  onChange={(e) => setEditData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  placeholder="Observações"
+                  rows={3}
+                />
               </div>
             </div>
-            
-            <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm text-muted-foreground">Telefone</p>
-                <p className="font-medium">{client.telefone || '-'}</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Endereço</p>
+                  <p className="font-medium">{client.endereco || '-'}</p>
+                </div>
               </div>
+              
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Telefone</p>
+                  <p className="font-medium">{client.telefone || '-'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Celular</p>
+                  <p className="font-medium">{client.celular || '-'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Cliente desde</p>
+                  <p className="font-medium">
+                    {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+              
+              {client.observacoes && (
+                <div className="pt-4 border-t border-border">
+                  <p className="text-sm text-muted-foreground mb-1">Observações</p>
+                  <p className="text-sm">{client.observacoes}</p>
+                </div>
+              )}
             </div>
-            
-            <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm text-muted-foreground">Celular</p>
-                <p className="font-medium">{client.celular || '-'}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm text-muted-foreground">Cliente desde</p>
-                <p className="font-medium">
-                  {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-            </div>
-            
-            {client.observacoes && (
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-1">Observações</p>
-                <p className="text-sm">{client.observacoes}</p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Budget History */}
