@@ -149,41 +149,43 @@ export default function ClientDetailPage() {
             <h3 className="text-lg font-semibold">
               {isEditing ? 'Editar Cliente' : 'Informações'}
             </h3>
-            {isAdmin && !isEditing && (
+            {!isEditing && (
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handleEdit}>
                   <Edit className="w-4 h-4" />
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir Cliente</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir o cliente "{client.nome}"? 
-                        {budgets.length > 0 && (
-                          <span className="block mt-2 text-destructive font-medium">
-                            Atenção: Este cliente possui {budgets.length} orçamento(s) vinculado(s).
-                          </span>
-                        )}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleDelete}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? 'Excluindo...' : 'Excluir'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                {isAdmin && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Cliente</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o cliente "{client.nome}"? 
+                          {budgets.length > 0 && (
+                            <span className="block mt-2 text-destructive font-medium">
+                              Atenção: Este cliente possui {budgets.length} orçamento(s) vinculado(s).
+                            </span>
+                          )}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? 'Excluindo...' : 'Excluir'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             )}
             {isEditing && (
