@@ -35,11 +35,13 @@ export default function NewBudgetPage() {
   const client = getClient(clientId || '');
   
   const [motorData, setMotorData] = useState<Omit<MotorInsert, 'id' | 'created_at'>>({
+    equipamento: '',
     tipo: '',
     modelo: '',
     cv: '',
     tensao: '',
     rpm: '',
+    passe: '',
     fios: '',
     espiras: '',
     ligacao: '',
@@ -199,25 +201,11 @@ export default function NewBudgetPage() {
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Tipo do Motor</Label>
-              <Select value={motorData.tipo} onValueChange={(v) => handleMotorChange('tipo', v)}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOTOR_TYPES.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Modelo</Label>
+              <Label>Equipamento</Label>
               <Input
-                value={motorData.modelo}
-                onChange={(e) => handleMotorChange('modelo', e.target.value)}
-                placeholder="Ex: W22"
+                value={motorData.equipamento}
+                onChange={(e) => handleMotorChange('equipamento', e.target.value)}
+                placeholder="Ex: Bomba, Compressor..."
                 className="h-11"
               />
             </div>
@@ -228,6 +216,16 @@ export default function NewBudgetPage() {
                 value={motorData.marca}
                 onChange={(e) => handleMotorChange('marca', e.target.value)}
                 placeholder="Ex: WEG"
+                className="h-11"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Modelo</Label>
+              <Input
+                value={motorData.modelo}
+                onChange={(e) => handleMotorChange('modelo', e.target.value)}
+                placeholder="Ex: W22"
                 className="h-11"
               />
             </div>
@@ -263,21 +261,11 @@ export default function NewBudgetPage() {
             </div>
             
             <div className="space-y-2">
-              <Label>RPM</Label>
+              <Label>Passe</Label>
               <Input
-                value={motorData.rpm}
-                onChange={(e) => handleMotorChange('rpm', e.target.value)}
-                placeholder="Ex: 1750"
-                className="h-11"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Nº de Fios</Label>
-              <Input
-                value={motorData.fios}
-                onChange={(e) => handleMotorChange('fios', e.target.value)}
-                placeholder="Ex: 6"
+                value={motorData.passe}
+                onChange={(e) => handleMotorChange('passe', e.target.value)}
+                placeholder="Ex: 1-8"
                 className="h-11"
               />
             </div>
@@ -293,6 +281,16 @@ export default function NewBudgetPage() {
             </div>
             
             <div className="space-y-2">
+              <Label>Nº de Fios</Label>
+              <Input
+                value={motorData.fios}
+                onChange={(e) => handleMotorChange('fios', e.target.value)}
+                placeholder="Ex: 6"
+                className="h-11"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label>Ligação</Label>
               <Select value={motorData.ligacao} onValueChange={(v) => handleMotorChange('ligacao', v)}>
                 <SelectTrigger className="h-11">
@@ -300,6 +298,30 @@ export default function NewBudgetPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {LIGACAO_TYPES.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>RPM</Label>
+              <Input
+                value={motorData.rpm}
+                onChange={(e) => handleMotorChange('rpm', e.target.value)}
+                placeholder="Ex: 1750"
+                className="h-11"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Tipo do Motor</Label>
+              <Select value={motorData.tipo} onValueChange={(v) => handleMotorChange('tipo', v)}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOTOR_TYPES.map(type => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>

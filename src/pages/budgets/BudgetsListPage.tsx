@@ -9,9 +9,16 @@ import {
   Search, 
   Download, 
   ChevronRight,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
-import { exportBudgetToPDF } from '@/lib/pdfExport';
+import { exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function BudgetsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,8 +78,8 @@ export default function BudgetsListPage() {
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="pendente">Pendente</SelectItem>
-              <SelectItem value="aprovado">Aprovado</SelectItem>
               <SelectItem value="concluido">Concluído</SelectItem>
+              <SelectItem value="baixado">Baixado</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -111,28 +118,41 @@ export default function BudgetsListPage() {
                   </td>
                   <td>
                     <span className={
-                      budget.status === 'concluido' ? 'badge-success' :
-                      budget.status === 'aprovado' ? 'badge-warning' :
+                      budget.status === 'baixado' ? 'badge-success' :
+                      budget.status === 'concluido' ? 'badge-warning' :
                       'badge-pending'
                     }>
-                      {budget.status === 'concluido' ? 'Concluído' :
-                       budget.status === 'aprovado' ? 'Aprovado' : 'Pendente'}
+                      {budget.status === 'baixado' ? 'Baixado' :
+                       budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
                     </span>
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="btn-pdf"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            PDF do Orçamento
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportMotorHeaderToPDF(budget)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            PDF do Cabeçário
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="btn-pdf"
-                        onClick={() => exportBudgetToPDF(budget)}
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => navigate(`${basePath}/clientes/${budget.client_id}`)}
+                        onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>

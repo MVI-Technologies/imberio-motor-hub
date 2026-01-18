@@ -16,6 +16,7 @@ import ClientDetailPage from "./pages/clients/ClientDetailPage";
 import ClientsListPage from "./pages/clients/ClientsListPage";
 import NewBudgetPage from "./pages/budgets/NewBudgetPage";
 import BudgetsListPage from "./pages/budgets/BudgetsListPage";
+import BudgetDetailPage from "./pages/budgets/BudgetDetailPage";
 import PartsManagementPage from "./pages/admin/PartsManagementPage";
 import NotFound from "./pages/NotFound";
 
@@ -78,6 +79,7 @@ function AppRoutes() {
       <Route path="/operador/clientes/:id" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
       <Route path="/operador/orcamentos" element={<ProtectedRoute><BudgetsListPage /></ProtectedRoute>} />
       <Route path="/operador/orcamento/novo/:clientId" element={<ProtectedRoute><NewBudgetPage /></ProtectedRoute>} />
+      <Route path="/operador/orcamento/:id" element={<ProtectedRoute><BudgetDetailPage /></ProtectedRoute>} />
       
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -86,6 +88,7 @@ function AppRoutes() {
       <Route path="/admin/clientes/:id" element={<ProtectedRoute allowedRoles={['admin']}><ClientDetailPage /></ProtectedRoute>} />
       <Route path="/admin/orcamentos" element={<ProtectedRoute allowedRoles={['admin']}><BudgetsListPage /></ProtectedRoute>} />
       <Route path="/admin/orcamento/novo/:clientId" element={<ProtectedRoute allowedRoles={['admin']}><NewBudgetPage /></ProtectedRoute>} />
+      <Route path="/admin/orcamento/:id" element={<ProtectedRoute allowedRoles={['admin']}><BudgetDetailPage /></ProtectedRoute>} />
       <Route path="/admin/pecas" element={<ProtectedRoute allowedRoles={['admin']}><PartsManagementPage /></ProtectedRoute>} />
       <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       

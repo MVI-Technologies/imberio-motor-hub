@@ -15,11 +15,11 @@ export default function AdminDashboard() {
   const { clients, budgets, parts } = useData();
   
   const pendingBudgets = budgets.filter(b => b.status === 'pendente').length;
-  const approvedBudgets = budgets.filter(b => b.status === 'aprovado').length;
   const completedBudgets = budgets.filter(b => b.status === 'concluido').length;
+  const downloadedBudgets = budgets.filter(b => b.status === 'baixado').length;
   
   const totalRevenue = budgets
-    .filter(b => b.status === 'concluido')
+    .filter(b => b.status === 'baixado')
     .reduce((sum, b) => sum + b.valor_total, 0);
 
   const stats = [
@@ -55,8 +55,8 @@ export default function AdminDashboard() {
 
   const statusCards = [
     { icon: Clock, label: 'Pendentes', value: pendingBudgets, color: 'text-warning', bgColor: 'bg-warning/10' },
-    { icon: AlertCircle, label: 'Aprovados', value: approvedBudgets, color: 'text-accent', bgColor: 'bg-accent/10' },
-    { icon: CheckCircle, label: 'Concluídos', value: completedBudgets, color: 'text-success', bgColor: 'bg-success/10' },
+    { icon: AlertCircle, label: 'Concluídos', value: completedBudgets, color: 'text-accent', bgColor: 'bg-accent/10' },
+    { icon: CheckCircle, label: 'Baixados', value: downloadedBudgets, color: 'text-success', bgColor: 'bg-success/10' },
   ];
 
   const recentBudgets = [...budgets]
@@ -131,12 +131,12 @@ export default function AdminDashboard() {
                       </td>
                       <td>
                         <span className={
-                          budget.status === 'concluido' ? 'badge-success' :
-                          budget.status === 'aprovado' ? 'badge-warning' :
+                          budget.status === 'baixado' ? 'badge-success' :
+                          budget.status === 'concluido' ? 'badge-warning' :
                           'badge-pending'
                         }>
-                          {budget.status === 'concluido' ? 'Concluído' :
-                           budget.status === 'aprovado' ? 'Aprovado' : 'Pendente'}
+                          {budget.status === 'baixado' ? 'Baixado' :
+                           budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
                         </span>
                       </td>
                       <td className="text-muted-foreground">

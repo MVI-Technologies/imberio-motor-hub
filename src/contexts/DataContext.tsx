@@ -40,7 +40,7 @@ export interface BudgetExpanded {
   valor_total: number;
   laudo_tecnico: string;
   observacoes: string;
-  status: 'pendente' | 'aprovado' | 'concluido';
+  status: 'pendente' | 'concluido' | 'baixado';
 }
 
 interface DataContextType {
@@ -73,9 +73,10 @@ interface DataContextType {
     valor_total: number;
     laudo_tecnico?: string;
     observacoes?: string;
-    status?: 'pendente' | 'aprovado' | 'concluido';
+    status?: 'pendente' | 'concluido' | 'baixado';
   }) => Promise<BudgetExpanded | null>;
   updateBudget: (id: string, budget: Partial<BudgetExpanded>) => Promise<void>;
+  deleteBudget: (id: string) => Promise<boolean>;
   getBudgetsByClient: (clientId: string) => BudgetExpanded[];
   getBudget: (id: string) => BudgetExpanded | undefined;
   refreshBudgets: () => Promise<void>;
@@ -165,11 +166,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         operador_name: budget.operador?.name || 'Operador não encontrado',
         motor: budget.motor || {
           id: '',
+          equipamento: null,
           tipo: null,
           modelo: null,
           cv: null,
           tensao: null,
           rpm: null,
+          passe: null,
           espiras: null,
           fios: null,
           ligacao: null,
@@ -325,7 +328,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     valor_total: number;
     laudo_tecnico?: string;
     observacoes?: string;
-    status?: 'pendente' | 'aprovado' | 'concluido';
+    status?: 'pendente' | 'concluido' | 'baixado';
   }): Promise<BudgetExpanded | null> => {
     // 1. Criar o motor primeiro
     const { data: motorData, error: motorError } = await supabase
@@ -437,6 +440,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...budgetData } : b));
   };
 
+  const deleteBudget = async (id: string): Promise<boolean> => {
+    const budget = budgets.find(b => b.id === id);
+    if (!budget) return false;
+
+    // Deletar itens do orçamento primeiro
+    const { error: itemsError } = await supabase
+      .from('budget_items')
+      .delete()
+      .eq('budget_id', id);
+
+    if (itemsError) {
+      console.error('Erro ao deletar itens do orçamento:', itemsError);
+      return false;
+    }
+
+    // Deletar o orçamento
+    const { error: budgetError } = await supabase
+      .from('budgets')
+      .delete()
+      .eq('id', id);
+
+    if (budgetError) {
+      console.error('Erro ao deletar orçamento:', budgetError);
+      return false;
+    }
+
+    // Deletar o motor associado (se existir)
+    if (budget.motor?.id) {
+      await supabase
+        .from('motors')
+        .delete()
+        .eq('id', budget.motor.id);
+    }
+
+    setBudgets(prev => prev.filter(b => b.id !== id));
+    return true;
+  };
+
   const getBudgetsByClient = (clientId: string) => budgets.filter(b => b.client_id === clientId);
 
   const getBudget = (id: string) => budgets.find(b => b.id === id);
@@ -463,6 +504,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       refreshParts,
       addBudget,
       updateBudget,
+      deleteBudget,
       getBudgetsByClient,
       getBudget,
       refreshBudgets,

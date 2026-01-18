@@ -63,11 +63,13 @@ export interface Database {
       motors: {
         Row: {
           id: string
+          equipamento: string | null
           tipo: string | null
           modelo: string | null
           cv: string | null
           tensao: string | null
           rpm: string | null
+          passe: string | null
           espiras: string | null
           fios: string | null
           ligacao: string | null
@@ -80,11 +82,13 @@ export interface Database {
         }
         Insert: {
           id?: string
+          equipamento?: string | null
           tipo?: string | null
           modelo?: string | null
           cv?: string | null
           tensao?: string | null
           rpm?: string | null
+          passe?: string | null
           espiras?: string | null
           fios?: string | null
           ligacao?: string | null
@@ -97,11 +101,13 @@ export interface Database {
         }
         Update: {
           id?: string
+          equipamento?: string | null
           tipo?: string | null
           modelo?: string | null
           cv?: string | null
           tensao?: string | null
           rpm?: string | null
+          passe?: string | null
           espiras?: string | null
           fios?: string | null
           ligacao?: string | null
@@ -152,7 +158,7 @@ export interface Database {
           valor_total: number | null
           laudo_tecnico: string | null
           observacoes: string | null
-          status: 'pendente' | 'aprovado' | 'concluido'
+          status: 'pendente' | 'concluido' | 'baixado'
         }
         Insert: {
           id?: string
@@ -163,7 +169,7 @@ export interface Database {
           valor_total?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
-          status?: 'pendente' | 'aprovado' | 'concluido'
+          status?: 'pendente' | 'concluido' | 'baixado'
         }
         Update: {
           id?: string
@@ -174,7 +180,7 @@ export interface Database {
           valor_total?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
-          status?: 'pendente' | 'aprovado' | 'concluido'
+          status?: 'pendente' | 'concluido' | 'baixado'
         }
       }
       budget_items: {

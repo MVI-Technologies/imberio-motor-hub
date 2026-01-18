@@ -14,7 +14,13 @@ import {
   Edit,
   ChevronRight
 } from 'lucide-react';
-import { exportClientToPDF, exportBudgetToPDF } from '@/lib/pdfExport';
+import { exportClientToPDF, exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -153,12 +159,12 @@ export default function ClientDetailPage() {
                         #{budget.id.toUpperCase().substring(0, 6)}
                       </span>
                       <span className={
-                        budget.status === 'concluido' ? 'badge-success' :
-                        budget.status === 'aprovado' ? 'badge-warning' :
+                        budget.status === 'baixado' ? 'badge-success' :
+                        budget.status === 'concluido' ? 'badge-warning' :
                         'badge-pending'
                       }>
-                        {budget.status === 'concluido' ? 'Concluído' :
-                         budget.status === 'aprovado' ? 'Aprovado' : 'Pendente'}
+                        {budget.status === 'baixado' ? 'Baixado' :
+                         budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
                       </span>
                     </div>
                     <p className="font-medium">
@@ -180,14 +186,27 @@ export default function ClientDetailPage() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="btn-pdf"
-                        onClick={() => exportBudgetToPDF(budget)}
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="btn-pdf"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            PDF do Orçamento
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportMotorHeaderToPDF(budget)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            PDF do Cabeçário
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button 
                         variant="ghost" 
                         size="sm"
