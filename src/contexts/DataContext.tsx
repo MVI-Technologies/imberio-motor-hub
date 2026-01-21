@@ -40,7 +40,7 @@ export interface BudgetExpanded {
   valor_total: number;
   laudo_tecnico: string;
   observacoes: string;
-  status: 'pendente' | 'concluido' | 'baixado';
+  status: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado';
 }
 
 interface DataContextType {
@@ -73,7 +73,7 @@ interface DataContextType {
     valor_total: number;
     laudo_tecnico?: string;
     observacoes?: string;
-    status?: 'pendente' | 'concluido' | 'baixado';
+    status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado';
   }) => Promise<BudgetExpanded | null>;
   updateBudget: (id: string, budget: Partial<BudgetExpanded>) => Promise<void>;
   deleteBudget: (id: string) => Promise<boolean>;

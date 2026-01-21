@@ -158,7 +158,7 @@ export interface Database {
           valor_total: number | null
           laudo_tecnico: string | null
           observacoes: string | null
-          status: 'pendente' | 'concluido' | 'baixado'
+          status: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'
         }
         Insert: {
           id?: string
@@ -169,7 +169,7 @@ export interface Database {
           valor_total?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
-          status?: 'pendente' | 'concluido' | 'baixado'
+          status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'
         }
         Update: {
           id?: string
@@ -180,7 +180,7 @@ export interface Database {
           valor_total?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
-          status?: 'pendente' | 'concluido' | 'baixado'
+          status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'
         }
       }
       budget_items: {

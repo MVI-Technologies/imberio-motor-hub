@@ -19,7 +19,8 @@ import {
   FileText,
   User,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import { exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
 import {
@@ -56,9 +57,10 @@ export default function BudgetDetailPage() {
   const [editData, setEditData] = useState({
     laudo_tecnico: budget?.laudo_tecnico || '',
     observacoes: budget?.observacoes || '',
-    status: budget?.status || 'pendente' as 'pendente' | 'concluido' | 'baixado',
+    status: budget?.status || 'pendente' as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
   if (isLoading) {
     return (
@@ -124,6 +126,8 @@ export default function BudgetDetailPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'pre_orcamento':
+        return <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">Pré-Orçamento</span>;
       case 'baixado':
         return <span className="badge-success">Baixado</span>;
       case 'concluido':
@@ -139,10 +143,12 @@ export default function BudgetDetailPage() {
     
     if (isAdmin) {
       // Admin pode mudar para qualquer status
-      return ['pendente', 'concluido', 'baixado'];
+      return ['pre_orcamento', 'pendente', 'concluido', 'baixado'];
     } else {
-      // Operador só pode mudar de pendente para concluído
-      if (currentStatus === 'pendente') {
+      // Operador
+      if (currentStatus === 'pre_orcamento') {
+        return ['pre_orcamento', 'pendente']; // Pode converter para orçamento
+      } else if (currentStatus === 'pendente') {
         return ['pendente', 'concluido'];
       } else if (currentStatus === 'concluido') {
         return ['concluido']; // Não pode voltar nem avançar
@@ -150,6 +156,18 @@ export default function BudgetDetailPage() {
         return [currentStatus]; // Baixado - não pode mudar
       }
     }
+  };
+
+  // Converter pré-orçamento em orçamento
+  const handleConvertToOrcamento = async () => {
+    if (budget.items.length === 0) {
+      toast.error('Adicione peças e serviços antes de converter para orçamento.');
+      return;
+    }
+    setIsConverting(true);
+    await updateBudget(budget.id, { status: 'pendente' });
+    setIsConverting(false);
+    toast.success('Pré-orçamento convertido em orçamento!');
   };
 
   return (
@@ -184,6 +202,21 @@ export default function BudgetDetailPage() {
           
           {!isEditing ? (
             <>
+              {budget.status === 'pre_orcamento' && (
+                <Button 
+                  onClick={handleConvertToOrcamento}
+                  disabled={isConverting}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isConverting ? 'Convertendo...' : (
+                    <>
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      Converter em Orçamento
+                    </>
+                  )}
+                </Button>
+              )}
+              
               <Button variant="outline" onClick={handleEdit}>
                 <Edit className="w-4 h-4 mr-2" />
                 Editar
@@ -265,13 +298,16 @@ export default function BudgetDetailPage() {
               {isEditing ? (
                 <Select 
                   value={editData.status} 
-                  onValueChange={(v) => setEditData(prev => ({ ...prev, status: v as 'pendente' | 'concluido' | 'baixado' }))}
+                  onValueChange={(v) => setEditData(prev => ({ ...prev, status: v as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado' }))}
                   disabled={getStatusOptions().length <= 1}
                 >
-                  <SelectTrigger className="h-8 w-32">
+                  <SelectTrigger className="h-8 w-36">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {getStatusOptions().includes('pre_orcamento') && (
+                      <SelectItem value="pre_orcamento">Pré-Orçamento</SelectItem>
+                    )}
                     {getStatusOptions().includes('pendente') && (
                       <SelectItem value="pendente">Pendente</SelectItem>
                     )}

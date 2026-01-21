@@ -322,10 +322,12 @@ export default function ClientDetailPage() {
                       <span className={
                         budget.status === 'baixado' ? 'badge-success' :
                         budget.status === 'concluido' ? 'badge-warning' :
+                        budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
                         'badge-pending'
                       }>
                         {budget.status === 'baixado' ? 'Baixado' :
-                         budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                         budget.status === 'concluido' ? 'Concluído' : 
+                         budget.status === 'pre_orcamento' ? 'Pré-Orçamento' : 'Pendente'}
                       </span>
                     </div>
                     <p className="font-medium">

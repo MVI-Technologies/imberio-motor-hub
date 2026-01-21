@@ -16,7 +16,8 @@ import {
   Plus, 
   Trash2, 
   CheckCircle,
-  Cog
+  Cog,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -138,10 +139,11 @@ export default function NewBudgetPage() {
 
   const totalValue = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, isPreOrcamento: boolean = false) => {
     e.preventDefault();
     
-    if (selectedItems.length === 0) {
+    // Se for orçamento normal, precisa de itens
+    if (!isPreOrcamento && selectedItems.length === 0) {
       toast.error('Adicione pelo menos uma peça ou serviço ao orçamento.');
       return;
     }
@@ -160,17 +162,24 @@ export default function NewBudgetPage() {
       valor_total: totalValue,
       laudo_tecnico: laudoTecnico,
       observacoes,
-      status: 'pendente',
+      status: isPreOrcamento ? 'pre_orcamento' : 'pendente',
     });
     
     if (newBudget) {
-      toast.success('Orçamento criado com sucesso!', {
-        description: `Valor total: R$ ${totalValue.toFixed(2)}`,
-        icon: <CheckCircle className="w-5 h-5 text-success" />,
-      });
+      if (isPreOrcamento) {
+        toast.success('Pré-orçamento criado com sucesso!', {
+          description: 'O motor foi registrado e aguarda orçamento.',
+          icon: <Clock className="w-5 h-5 text-warning" />,
+        });
+      } else {
+        toast.success('Orçamento criado com sucesso!', {
+          description: `Valor total: R$ ${totalValue.toFixed(2)}`,
+          icon: <CheckCircle className="w-5 h-5 text-success" />,
+        });
+      }
       navigate(`${basePath}/clientes/${client.id}`);
     } else {
-      toast.error('Erro ao criar orçamento', {
+      toast.error(`Erro ao criar ${isPreOrcamento ? 'pré-orçamento' : 'orçamento'}`, {
         description: 'Tente novamente.',
       });
     }
@@ -497,13 +506,32 @@ export default function NewBudgetPage() {
             </p>
           </div>
           
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <Button 
               type="button" 
               variant="outline"
               onClick={() => navigate(-1)}
             >
               Cancelar
+            </Button>
+            <Button 
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={(e) => handleSubmit(e, true)}
+              className="border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="spinner" />
+                  Salvando...
+                </span>
+              ) : (
+                <>
+                  <Clock className="w-5 h-5" />
+                  Salvar Pré-Orçamento
+                </>
+              )}
             </Button>
             <Button 
               type="submit"

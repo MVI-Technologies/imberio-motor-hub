@@ -261,15 +261,21 @@ export function exportMotorHeaderToPDF(budget: BudgetExpanded) {
   doc.setLineWidth(0.3);
   doc.rect(margin, margin, pageWidth - (margin * 2), pageHeight - (margin * 2), 'S');
 
-  // Header com fundo escuro
-  doc.setFillColor(30, 30, 30);
+  // Header com fundo - cor diferente para pré-orçamento
+  const isPreOrcamento = budget.status === 'pre_orcamento';
+  if (isPreOrcamento) {
+    doc.setFillColor(200, 80, 0); // Laranja para pré-orçamento
+  } else {
+    doc.setFillColor(30, 30, 30); // Escuro para orçamento normal
+  }
   doc.rect(margin, margin, pageWidth - (margin * 2), 10, 'F');
 
-  // Título "IDENTIFICAÇÃO DO MOTOR"
+  // Título - diferente para pré-orçamento
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text('IDENTIFICAÇÃO DO MOTOR', pageWidth / 2, margin + 6.5, { align: 'center' });
+  const headerTitle = isPreOrcamento ? 'PRÉ-ORÇAMENTO - AGUARDANDO' : 'IDENTIFICAÇÃO DO MOTOR';
+  doc.text(headerTitle, pageWidth / 2, margin + 6.5, { align: 'center' });
 
   // Linha 1: CLIENTE (grande e em destaque)
   let yPos = margin + 15;
