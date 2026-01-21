@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Phone,
   MapPin,
-  History
+  History,
+  Plus
 } from 'lucide-react';
 import { exportClientToPDF } from '@/lib/pdfExport';
 
@@ -46,6 +47,15 @@ export default function ClientsListPage() {
     <DashboardLayout 
       title="Clientes" 
       subtitle={`${clients.length} clientes cadastrados`}
+      actions={
+        <Button 
+          className="btn-industrial-accent"
+          onClick={() => navigate(`${basePath}/clientes/novo`)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Cliente
+        </Button>
+      }
     >
       {/* Search */}
       <div className="max-w-md mb-8">

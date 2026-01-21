@@ -11,6 +11,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Plus, 
   Search, 
@@ -27,6 +37,8 @@ export default function PartsManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
+  const [deletingPart, setDeletingPart] = useState<Part | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     tipo: '',
@@ -115,10 +127,17 @@ export default function PartsManagementPage() {
     handleCloseModal();
   };
 
-  const handleDelete = (part: Part) => {
-    if (confirm(`Tem certeza que deseja excluir "${part.nome}"?`)) {
-      deletePart(part.id);
+  const handleOpenDeleteDialog = (part: Part) => {
+    setDeletingPart(part);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingPart) {
+      await deletePart(deletingPart.id);
       toast.success('Peça excluída com sucesso!');
+      setIsDeleteDialogOpen(false);
+      setDeletingPart(null);
     }
   };
 
@@ -198,7 +217,7 @@ export default function PartsManagementPage() {
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(part)}
+                            onClick={() => handleOpenDeleteDialog(part)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -302,6 +321,30 @@ export default function PartsManagementPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Peça</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a peça "{deletingPart?.nome}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingPart(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

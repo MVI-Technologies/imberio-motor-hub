@@ -140,7 +140,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Buscar itens de cada orçamento
     const expandedBudgets: BudgetExpanded[] = [];
     
-    for (const budget of budgetsData || []) {
+    for (const budget of (budgetsData || []) as any[]) {
       const { data: itemsData } = await supabase
         .from('budget_items')
         .select(`
@@ -149,7 +149,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         `)
         .eq('budget_id', budget.id);
 
-      const items = (itemsData || []).map(item => ({
+      const items = ((itemsData || []) as any[]).map(item => ({
         id: item.id,
         part_id: item.part_id || '',
         part_name: item.part?.nome || 'Peça não encontrada',
@@ -211,7 +211,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addClient = async (clientData: Omit<ClientInsert, 'id' | 'created_at'>): Promise<Client | null> => {
     const { data, error } = await supabase
       .from('clients')
-      .insert(clientData)
+      .insert(clientData as any)
       .select()
       .single();
 
@@ -225,8 +225,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateClient = async (id: string, clientData: ClientUpdate) => {
-    const { error } = await supabase
-      .from('clients')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('clients') as any)
       .update(clientData)
       .eq('id', id);
 
@@ -273,7 +273,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addPart = async (partData: Omit<PartInsert, 'id' | 'created_at'>): Promise<Part | null> => {
     const { data, error } = await supabase
       .from('parts')
-      .insert(partData)
+      .insert(partData as any)
       .select()
       .single();
 
@@ -287,8 +287,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updatePart = async (id: string, partData: PartUpdate) => {
-    const { error } = await supabase
-      .from('parts')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('parts') as any)
       .update(partData)
       .eq('id', id);
 
@@ -333,7 +333,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // 1. Criar o motor primeiro
     const { data: motorData, error: motorError } = await supabase
       .from('motors')
-      .insert(budgetData.motor)
+      .insert(budgetData.motor as any)
       .select()
       .single();
 
@@ -348,12 +348,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .insert({
         client_id: budgetData.client_id,
         operador_id: budgetData.operador_id,
-        motor_id: motorData.id,
+        motor_id: (motorData as any).id,
         valor_total: budgetData.valor_total,
         laudo_tecnico: budgetData.laudo_tecnico,
         observacoes: budgetData.observacoes,
         status: budgetData.status || 'pendente',
-      })
+      } as any)
       .select()
       .single();
 
@@ -364,7 +364,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // 3. Criar os itens do orçamento
     const itemsToInsert = budgetData.items.map(item => ({
-      budget_id: budgetResult.id,
+      budget_id: (budgetResult as any).id,
       part_id: item.part_id,
       quantidade: item.quantidade,
       valor_unitario: item.valor_unitario,
@@ -372,7 +372,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const { data: itemsData, error: itemsError } = await supabase
       .from('budget_items')
-      .insert(itemsToInsert)
+      .insert(itemsToInsert as any)
       .select(`
         *,
         part:parts(*)
@@ -392,13 +392,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .single();
 
     const expandedBudget: BudgetExpanded = {
-      id: budgetResult.id,
+      id: (budgetResult as any).id,
       client_id: budgetData.client_id,
       client_name: client?.nome || 'Cliente não encontrado',
       operador_id: budgetData.operador_id,
-      operador_name: operador?.name || 'Operador não encontrado',
-      motor: motorData,
-      items: (itemsData || []).map(item => ({
+      operador_name: (operador as any)?.name || 'Operador não encontrado',
+      motor: motorData as any,
+      items: ((itemsData || []) as any[]).map(item => ({
         id: item.id,
         part_id: item.part_id || '',
         part_name: item.part?.nome || 'Peça não encontrada',
@@ -406,7 +406,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         valor_unitario: Number(item.valor_unitario),
         subtotal: Number(item.subtotal),
       })),
-      data: budgetResult.data,
+      data: (budgetResult as any).data,
       valor_total: budgetData.valor_total,
       laudo_tecnico: budgetData.laudo_tecnico || '',
       observacoes: budgetData.observacoes || '',
@@ -426,8 +426,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (budgetData.status !== undefined) updateData.status = budgetData.status;
 
     if (Object.keys(updateData).length > 0) {
-      const { error } = await supabase
-        .from('budgets')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('budgets') as any)
         .update(updateData)
         .eq('id', id);
 
