@@ -16,8 +16,19 @@ import {
 import { Button } from '@/components/ui/button';
 
 export default function AdminDashboard() {
-  const { clients, budgets, parts } = useData();
+  const { clients, budgets, parts, isLoading } = useData();
   const [showMonthly, setShowMonthly] = useState(false);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return { month: now.getMonth(), year: now.getFullYear() };

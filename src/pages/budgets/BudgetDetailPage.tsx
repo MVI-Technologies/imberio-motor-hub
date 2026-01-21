@@ -44,7 +44,7 @@ import { toast } from 'sonner';
 export default function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getBudget, updateBudget, deleteBudget } = useData();
+  const { getBudget, updateBudget, deleteBudget, isLoading } = useData();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
@@ -59,6 +59,17 @@ export default function BudgetDetailPage() {
     status: budget?.status || 'pendente' as 'pendente' | 'concluido' | 'baixado',
   });
   const [isDeleting, setIsDeleting] = useState(false);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando dados do orçamento...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!budget) {
     return (

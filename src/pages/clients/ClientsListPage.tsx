@@ -17,8 +17,19 @@ import { exportClientToPDF } from '@/lib/pdfExport';
 export default function ClientsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
-  const { clients, getBudgetsByClient } = useData();
+  const { clients, getBudgetsByClient, isLoading } = useData();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando clientes...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/operador';

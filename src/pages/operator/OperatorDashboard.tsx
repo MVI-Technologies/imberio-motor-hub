@@ -19,8 +19,22 @@ import { exportClientToPDF } from '@/lib/pdfExport';
 
 export default function OperatorDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { searchClients, getBudgetsByClient } = useData();
+  const { searchClients, getBudgetsByClient, isLoading } = useData();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout 
+        title="Área do Operador" 
+        subtitle="Busque clientes ou cadastre novos orçamentos"
+      >
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   const filteredClients = searchQuery.trim() ? searchClients(searchQuery) : [];
   const showResults = searchQuery.trim().length > 0;

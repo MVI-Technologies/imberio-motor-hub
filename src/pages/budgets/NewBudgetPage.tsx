@@ -26,7 +26,7 @@ const LIGACAO_TYPES = ['Estrela', 'Triângulo', 'Mista'];
 export default function NewBudgetPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const { user } = useAuth();
-  const { getClient, parts, addBudget } = useData();
+  const { getClient, parts, addBudget, isLoading } = useData();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
@@ -66,6 +66,17 @@ export default function NewBudgetPage() {
   
   const [selectedItems, setSelectedItems] = useState<LocalBudgetItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando dados...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!client) {
     return (

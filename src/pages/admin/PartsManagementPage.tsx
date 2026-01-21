@@ -23,7 +23,7 @@ import {
 import { toast } from 'sonner';
 
 export default function PartsManagementPage() {
-  const { parts, addPart, updatePart, deletePart } = useData();
+  const { parts, addPart, updatePart, deletePart, isLoading } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
@@ -34,6 +34,17 @@ export default function PartsManagementPage() {
     unidade: 'un',
     observacoes: '',
   });
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando peças...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const filteredParts = searchQuery.trim()
     ? parts.filter(p => 

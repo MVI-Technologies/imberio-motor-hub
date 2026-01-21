@@ -42,7 +42,7 @@ import { toast } from 'sonner';
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getClient, getBudgetsByClient, updateClient, deleteClient } = useData();
+  const { getClient, getBudgetsByClient, updateClient, deleteClient, isLoading } = useData();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
@@ -91,6 +91,17 @@ export default function ClientDetailPage() {
     toast.success('Cliente excluído com sucesso!');
     navigate(`${basePath}/clientes`);
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando dados do cliente...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (!client) {
     return (

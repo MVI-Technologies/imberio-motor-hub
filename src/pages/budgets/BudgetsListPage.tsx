@@ -24,8 +24,19 @@ export default function BudgetsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { user } = useAuth();
-  const { budgets } = useData();
+  const { budgets, isLoading } = useData();
   const navigate = useNavigate();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Carregando...">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando orçamentos...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   const isAdmin = user?.role === 'admin';
   const basePath = isAdmin ? '/admin' : '/operador';
