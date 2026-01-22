@@ -1,0 +1,23 @@
+{
+  "name": "Dyque & Daya - Sistema de Gestão",
+  "short_name": "Dyque & Daya",
+  "description": "Sistema de gestão de motores elétricos, orçamentos técnicos e controle de peças",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a3647",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}
