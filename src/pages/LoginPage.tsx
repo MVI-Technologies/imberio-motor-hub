@@ -54,7 +54,7 @@ export default function LoginPage() {
               <Cog className="w-10 h-10 text-accent-foreground motor-spin" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-primary-foreground">Dyque & Daya</h1>
+              <h1 className="text-4xl font-bold text-primary-foreground">DYQUE & DAYA</h1>
               <p className="text-primary-foreground/80 text-lg">Registros</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
               <Cog className="w-8 h-8 text-primary-foreground motor-spin" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Dyque & Daya</h1>
+              <h1 className="text-2xl font-bold text-foreground">DYQUE & DAYA</h1>
               <p className="text-muted-foreground text-sm">Registros</p>
             </div>
           </div>

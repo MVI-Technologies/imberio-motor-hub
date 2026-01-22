@@ -58,7 +58,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
             <Cog className="w-6 h-6 text-sidebar-primary-foreground motor-spin" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">Dyque & Daya</h1>
+            <h1 className="font-bold text-lg text-sidebar-foreground">DYQUE & DAYA</h1>
             <p className="text-xs text-sidebar-foreground/60">Registros</p>
           </div>
         </div>
