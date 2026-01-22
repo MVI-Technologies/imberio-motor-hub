@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,15 +23,9 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const [showLoading, setShowLoading] = useState(true);
 
-  // Timeout para não ficar travado no loading
-  useEffect(() => {
-    const timer = setTimeout(() => setShowLoading(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  if (isLoading && showLoading) {
+  // Sempre espera o loading terminar antes de tomar qualquer decisão
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -43,10 +36,12 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     );
   }
   
+  // Só redireciona para login após o loading terminar E não estar autenticado
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
+  // Verifica roles apenas se o usuário existe
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     return <Navigate to={user.role === 'admin' ? '/admin' : '/operador'} replace />;
   }

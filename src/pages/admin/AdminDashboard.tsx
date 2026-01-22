@@ -18,6 +18,10 @@ import { Button } from '@/components/ui/button';
 export default function AdminDashboard() {
   const { clients, budgets, parts, isLoading } = useData();
   const [showMonthly, setShowMonthly] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return { month: now.getMonth(), year: now.getFullYear() };
+  });
 
   if (isLoading) {
     return (
@@ -29,10 +33,6 @@ export default function AdminDashboard() {
       </DashboardLayout>
     );
   }
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return { month: now.getMonth(), year: now.getFullYear() };
-  });
   
   const pendingBudgets = budgets.filter(b => b.status === 'pendente').length;
   const completedBudgets = budgets.filter(b => b.status === 'concluido').length;

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import type { 
   Client, 
   Part, 
@@ -85,6 +86,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [budgets, setBudgets] = useState<BudgetExpanded[]>([]);
@@ -195,7 +197,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setBudgets(expandedBudgets);
   }, []);
 
-  // Carrega dados iniciais
+  // Carrega dados iniciais apenas quando autenticado
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -203,8 +205,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     };
     
-    loadData();
-  }, [fetchClients, fetchParts, fetchBudgets]);
+    // Só carrega dados quando a autenticação terminar e o usuário estiver autenticado
+    if (!authLoading && isAuthenticated) {
+      loadData();
+    } else if (!authLoading && !isAuthenticated) {
+      // Se não está autenticado, limpa os dados e para o loading
+      setClients([]);
+      setParts([]);
+      setBudgets([]);
+      setIsLoading(false);
+    }
+  }, [fetchClients, fetchParts, fetchBudgets, authLoading, isAuthenticated]);
 
   // ========== CLIENTS ==========
 
