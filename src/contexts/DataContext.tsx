@@ -39,6 +39,7 @@ export interface BudgetExpanded {
   }[];
   data: string;
   valor_total: number;
+  desconto_percentual?: number;
   laudo_tecnico: string;
   observacoes: string;
   status: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado';
@@ -72,6 +73,7 @@ interface DataContextType {
     motor: Omit<MotorInsert, 'id' | 'created_at'>;
     items: { part_id: string; quantidade: number; valor_unitario: number }[];
     valor_total: number;
+    desconto_percentual?: number;
     laudo_tecnico?: string;
     observacoes?: string;
     status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado';
@@ -192,6 +194,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         items,
         data: budget.data,
         valor_total: Number(budget.valor_total) || 0,
+        desconto_percentual: budget.desconto_percentual ? Number(budget.desconto_percentual) : undefined,
         laudo_tecnico: budget.laudo_tecnico || '',
         observacoes: budget.observacoes || '',
         status: budget.status || 'pendente',
@@ -341,6 +344,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     motor: Omit<MotorInsert, 'id' | 'created_at'>;
     items: { part_id: string; quantidade: number; valor_unitario: number }[];
     valor_total: number;
+    desconto_percentual?: number;
     laudo_tecnico?: string;
     observacoes?: string;
     status?: 'pendente' | 'concluido' | 'baixado';
@@ -365,6 +369,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         operador_id: budgetData.operador_id,
         motor_id: (motorData as any).id,
         valor_total: budgetData.valor_total,
+        desconto_percentual: budgetData.desconto_percentual || null,
         laudo_tecnico: budgetData.laudo_tecnico,
         observacoes: budgetData.observacoes,
         status: budgetData.status || 'pendente',
@@ -423,6 +428,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       })),
       data: (budgetResult as any).data,
       valor_total: budgetData.valor_total,
+      desconto_percentual: budgetData.desconto_percentual,
       laudo_tecnico: budgetData.laudo_tecnico || '',
       observacoes: budgetData.observacoes || '',
       status: budgetData.status || 'pendente',

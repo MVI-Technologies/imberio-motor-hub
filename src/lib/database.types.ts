@@ -156,6 +156,7 @@ export interface Database {
           motor_id: string | null
           data: string
           valor_total: number | null
+          desconto_percentual: number | null
           laudo_tecnico: string | null
           observacoes: string | null
           status: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'
@@ -167,6 +168,7 @@ export interface Database {
           motor_id?: string | null
           data?: string
           valor_total?: number | null
+          desconto_percentual?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
           status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'
@@ -178,6 +180,7 @@ export interface Database {
           motor_id?: string | null
           data?: string
           valor_total?: number | null
+          desconto_percentual?: number | null
           laudo_tecnico?: string | null
           observacoes?: string | null
           status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado'

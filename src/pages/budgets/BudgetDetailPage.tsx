@@ -23,9 +23,10 @@ import {
   CheckCircle,
   ArrowRight,
   Plus,
-  Pencil
+  Pencil,
+  MessageCircle
 } from 'lucide-react';
-import { exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
+import { exportBudgetToPDF, exportMotorHeaderToPDF, sendBudgetViaWhatsApp } from '@/lib/pdfExport';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +77,12 @@ export default function BudgetDetailPage() {
   
   const budget = getBudget(id || '');
   
+  // Calcular valores com desconto
+  const subtotalValue = budget ? budget.items.reduce((sum, item) => sum + item.subtotal, 0) : 0;
+  const descontoPercentual = budget?.desconto_percentual || 0;
+  const descontoValue = descontoPercentual > 0 ? (subtotalValue * descontoPercentual) / 100 : 0;
+  const valorTotalComDesconto = subtotalValue - descontoValue;
+  
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingMotor, setIsEditingMotor] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -85,7 +92,10 @@ export default function BudgetDetailPage() {
     laudo_tecnico: budget?.laudo_tecnico || '',
     observacoes: budget?.observacoes || '',
     status: budget?.status || 'pendente' as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado',
+    desconto_percentual: budget?.desconto_percentual || 0,
   });
+  
+  const [hasDescontoEdit, setHasDescontoEdit] = useState(!!budget?.desconto_percentual);
   
   const [motorData, setMotorData] = useState<Partial<Motor>>({
     equipamento: budget?.motor?.equipamento || '',
@@ -121,7 +131,9 @@ export default function BudgetDetailPage() {
         laudo_tecnico: budget.laudo_tecnico || '',
         observacoes: budget.observacoes || '',
         status: budget.status || 'pendente',
+        desconto_percentual: budget.desconto_percentual || 0,
       });
+      setHasDescontoEdit(!!budget.desconto_percentual);
       setMotorData({
         equipamento: budget.motor?.equipamento || '',
         marca: budget.motor?.marca || '',
@@ -172,7 +184,9 @@ export default function BudgetDetailPage() {
       laudo_tecnico: budget.laudo_tecnico || '',
       observacoes: budget.observacoes || '',
       status: budget.status || 'pendente',
+      desconto_percentual: budget.desconto_percentual || 0,
     });
+    setHasDescontoEdit(!!budget.desconto_percentual);
     setIsEditing(true);
   };
 
@@ -185,7 +199,9 @@ export default function BudgetDetailPage() {
       laudo_tecnico: budget.laudo_tecnico || '',
       observacoes: budget.observacoes || '',
       status: budget.status || 'pendente',
+      desconto_percentual: budget.desconto_percentual || 0,
     });
+    setHasDescontoEdit(!!budget.desconto_percentual);
     setMotorData({
       equipamento: budget?.motor?.equipamento || '',
       marca: budget?.motor?.marca || '',
@@ -207,11 +223,35 @@ export default function BudgetDetailPage() {
   };
 
   const handleSaveEdit = async () => {
-    await updateBudget(budget.id, editData);
+    // Validar desconto para operador (máximo 7%)
+    if (hasDescontoEdit && !isAdmin && editData.desconto_percentual > 7) {
+      toast.error('Operadores podem dar no máximo 7% de desconto.');
+      return;
+    }
+    
+    // Validar desconto para admin (máximo 100%)
+    if (hasDescontoEdit && isAdmin && editData.desconto_percentual > 100) {
+      toast.error('O desconto máximo é de 100%.');
+      return;
+    }
+    
+    // Calcular novo valor total com desconto
+    const subtotal = budget.items.reduce((sum, item) => sum + item.subtotal, 0);
+    const desconto = hasDescontoEdit && editData.desconto_percentual > 0
+      ? (subtotal * editData.desconto_percentual) / 100
+      : 0;
+    const novoValorTotal = subtotal - desconto;
+    
+    await updateBudget(budget.id, {
+      ...editData,
+      valor_total: novoValorTotal,
+      desconto_percentual: hasDescontoEdit ? editData.desconto_percentual : undefined,
+    });
     setIsEditing(false);
     setIsEditingMotor(false);
     setIsAddingItem(false);
     setEditingItemId(null);
+    await refreshBudgets();
     toast.success('Orçamento atualizado com sucesso!');
   };
 
@@ -414,6 +454,19 @@ export default function BudgetDetailPage() {
                 <Download className="w-4 h-4 mr-2" />
                 PDF do Cabeçário
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                const client = getClient(budget.client_id);
+                const clientPhone = client?.telefone || client?.celular || '';
+                const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                if (!success) {
+                  toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                } else {
+                  toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                }
+              }}>
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar via WhatsApp
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -548,7 +601,14 @@ export default function BudgetDetailPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Valor Total</p>
-              <p className="font-bold text-xl text-primary">R$ {budget.valor_total.toFixed(2)}</p>
+              <p className="font-bold text-xl text-primary">
+                R$ {budget.valor_total.toFixed(2)}
+                {descontoPercentual > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground block">
+                    (com {descontoPercentual}% de desconto)
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -936,6 +996,26 @@ export default function BudgetDetailPage() {
                   ))}
                 </tbody>
                 <tfoot>
+                  {(descontoPercentual > 0 || (isEditing && hasDescontoEdit)) && (
+                    <>
+                      <tr>
+                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold">
+                          Subtotal:
+                        </td>
+                        <td className="text-right font-mono font-semibold">
+                          R$ {subtotalValue.toFixed(2)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-destructive">
+                          Desconto ({descontoPercentual}%):
+                        </td>
+                        <td className="text-right font-mono font-semibold text-destructive">
+                          - R$ {descontoValue.toFixed(2)}
+                        </td>
+                      </tr>
+                    </>
+                  )}
                   <tr>
                     <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
                     <td className="text-right font-mono font-bold text-xl text-primary">
@@ -949,6 +1029,78 @@ export default function BudgetDetailPage() {
             <p className="text-muted-foreground text-center py-8">
               Nenhum item registrado neste orçamento.
             </p>
+          )}
+          
+          {/* Desconto Section - Only when editing */}
+          {isEditing && budget.items.length > 0 && (
+            <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <Checkbox
+                  id="hasDescontoEdit"
+                  checked={hasDescontoEdit}
+                  onCheckedChange={(checked) => {
+                    setHasDescontoEdit(checked === true);
+                    if (!checked) {
+                      setEditData(prev => ({ ...prev, desconto_percentual: 0 }));
+                    }
+                  }}
+                />
+                <Label htmlFor="hasDescontoEdit" className="font-semibold cursor-pointer">
+                  Aplicar desconto
+                </Label>
+              </div>
+              
+              {hasDescontoEdit && (
+                <div className="ml-7 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="descontoPercentualEdit" className="w-32">
+                      Desconto (%):
+                    </Label>
+                    <Input
+                      id="descontoPercentualEdit"
+                      type="number"
+                      min="0"
+                      max={isAdmin ? 100 : 7}
+                      step="1"
+                      value={editData.desconto_percentual > 0 ? editData.desconto_percentual : ''}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                        if (value > 0) {
+                          if (!isAdmin && value > 7) {
+                            toast.error('Operadores podem dar no máximo 7% de desconto.');
+                            setEditData(prev => ({ ...prev, desconto_percentual: 7 }));
+                          } else if (isAdmin && value > 100) {
+                            toast.error('O desconto máximo é de 100%.');
+                            setEditData(prev => ({ ...prev, desconto_percentual: 100 }));
+                          } else {
+                            setEditData(prev => ({ ...prev, desconto_percentual: e.target.value === '' ? 0 : value }));
+                          }
+                        } else {
+                          setEditData(prev => ({ ...prev, desconto_percentual: e.target.value === '' ? 0 : value }));
+                        }
+                      }}
+                      className="w-32"
+                      placeholder="%"
+                    />
+                    {!isAdmin && (
+                      <span className="text-sm text-muted-foreground">
+                        (Máximo: 7%)
+                      </span>
+                    )}
+                    {isAdmin && (
+                      <span className="text-sm text-muted-foreground">
+                        (Máximo: 100%)
+                      </span>
+                    )}
+                  </div>
+                  {hasDescontoEdit && editData.desconto_percentual > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Valor do desconto: R$ {((subtotalValue * editData.desconto_percentual) / 100).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
 

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
   Save, 
@@ -55,6 +56,8 @@ export default function NewBudgetPage() {
   
   const [laudoTecnico, setLaudoTecnico] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [hasDesconto, setHasDesconto] = useState(false);
+  const [descontoPercentual, setDescontoPercentual] = useState<number | ''>('');
   
   interface LocalBudgetItem {
     id: string;
@@ -137,7 +140,11 @@ export default function NewBudgetPage() {
     setSelectedItems(prev => prev.filter(item => item.id !== itemId));
   };
 
-  const totalValue = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
+  const subtotalValue = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
+  const descontoValue = hasDesconto && descontoPercentual !== '' && descontoPercentual > 0 
+    ? (subtotalValue * Number(descontoPercentual)) / 100 
+    : 0;
+  const totalValue = subtotalValue - descontoValue;
 
   const handleSubmit = async (e: React.FormEvent, isPreOrcamento: boolean = false) => {
     e.preventDefault();
@@ -145,6 +152,23 @@ export default function NewBudgetPage() {
     // Se for orçamento normal, precisa de itens
     if (!isPreOrcamento && selectedItems.length === 0) {
       toast.error('Adicione pelo menos uma peça ou serviço ao orçamento.');
+      return;
+    }
+    
+    // Validar desconto para operador (máximo 7%)
+    if (hasDesconto && descontoPercentual !== '' && !isAdmin && Number(descontoPercentual) > 7) {
+      toast.error('Operadores podem dar no máximo 7% de desconto.');
+      return;
+    }
+    
+    // Validar desconto para admin (máximo 100%)
+    if (hasDesconto && descontoPercentual !== '' && isAdmin && Number(descontoPercentual) > 100) {
+      toast.error('O desconto máximo é de 100%.');
+      return;
+    }
+    
+    if (hasDesconto && (descontoPercentual === '' || Number(descontoPercentual) <= 0)) {
+      toast.error('Informe uma porcentagem de desconto válida.');
       return;
     }
     
@@ -160,6 +184,7 @@ export default function NewBudgetPage() {
         valor_unitario: item.valor_unitario,
       })),
       valor_total: totalValue,
+      desconto_percentual: hasDesconto && descontoPercentual !== '' ? Number(descontoPercentual) : undefined,
       laudo_tecnico: laudoTecnico,
       observacoes,
       status: isPreOrcamento ? 'pre_orcamento' : 'pendente',
@@ -465,6 +490,28 @@ export default function NewBudgetPage() {
                   ))}
                 </tbody>
                 <tfoot>
+                  {hasDesconto && descontoPercentual > 0 && (
+                    <>
+                      <tr>
+                        <td colSpan={3} className="text-right font-semibold">
+                          Subtotal:
+                        </td>
+                        <td className="text-right font-mono font-semibold">
+                          R$ {subtotalValue.toFixed(2)}
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="text-right font-semibold text-destructive">
+                          Desconto ({descontoPercentual}%):
+                        </td>
+                        <td className="text-right font-mono font-semibold text-destructive">
+                          - R$ {descontoValue.toFixed(2)}
+                        </td>
+                        <td></td>
+                      </tr>
+                    </>
+                  )}
                   <tr>
                     <td colSpan={3} className="text-right font-semibold text-lg">
                       TOTAL:
@@ -482,6 +529,78 @@ export default function NewBudgetPage() {
               <Plus className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p>Nenhum item adicionado ainda.</p>
               <p className="text-sm">Use o seletor acima para adicionar peças e serviços.</p>
+            </div>
+          )}
+          
+          {/* Desconto Section */}
+          {selectedItems.length > 0 && (
+            <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border">
+              <div className="flex items-center gap-3 mb-3">
+                <Checkbox
+                  id="hasDesconto"
+                  checked={hasDesconto}
+                  onCheckedChange={(checked) => {
+                    setHasDesconto(checked === true);
+                    if (!checked) {
+                      setDescontoPercentual('');
+                    }
+                  }}
+                />
+                <Label htmlFor="hasDesconto" className="font-semibold cursor-pointer">
+                  Aplicar desconto
+                </Label>
+              </div>
+              
+              {hasDesconto && (
+                <div className="ml-7 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="descontoPercentual" className="w-32">
+                      Desconto (%):
+                    </Label>
+                    <Input
+                      id="descontoPercentual"
+                      type="number"
+                      min="0"
+                      max={isAdmin ? undefined : 7}
+                      step="1"
+                      value={descontoPercentual !== '' && descontoPercentual > 0 ? descontoPercentual : ''}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? '' : parseFloat(e.target.value) || 0;
+                        if (value !== '') {
+                          if (!isAdmin && value > 7) {
+                            toast.error('Operadores podem dar no máximo 7% de desconto.');
+                            setDescontoPercentual(7);
+                          } else if (isAdmin && value > 100) {
+                            toast.error('O desconto máximo é de 100%.');
+                            setDescontoPercentual(100);
+                          } else {
+                            setDescontoPercentual(value);
+                          }
+                        } else {
+                          setDescontoPercentual(value);
+                        }
+                      }}
+                      className="w-32"
+                      placeholder="%"
+                    />
+                    {!isAdmin && (
+                      <span className="text-sm text-muted-foreground">
+                        (Máximo: 7%)
+                      </span>
+                    )}
+                    {isAdmin && (
+                      <span className="text-sm text-muted-foreground">
+                        (Máximo: 100%)
+                      </span>
+                    )}
+                  </div>
+                  {hasDesconto && descontoPercentual > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Valor do desconto: R$ {descontoValue.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

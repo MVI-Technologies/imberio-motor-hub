@@ -10,9 +10,11 @@ import {
   Download, 
   ChevronRight,
   Filter,
-  FileText
+  FileText,
+  MessageCircle
 } from 'lucide-react';
-import { exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
+import { exportBudgetToPDF, exportMotorHeaderToPDF, sendBudgetViaWhatsApp } from '@/lib/pdfExport';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,6 +166,19 @@ export default function BudgetsListPage() {
                           }}>
                             <Download className="w-4 h-4 mr-2" />
                             PDF do Cabeçário
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const client = getClient(budget.client_id);
+                            const clientPhone = client?.telefone || client?.celular || '';
+                            const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                            if (!success) {
+                              toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                            } else {
+                              toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                            }
+                          }}>
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Enviar via WhatsApp
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

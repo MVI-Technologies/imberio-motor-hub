@@ -17,9 +17,10 @@ import {
   ChevronRight,
   Trash2,
   X,
-  Save
+  Save,
+  MessageCircle
 } from 'lucide-react';
-import { exportClientToPDF, exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
+import { exportClientToPDF, exportBudgetToPDF, exportMotorHeaderToPDF, sendBudgetViaWhatsApp } from '@/lib/pdfExport';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -370,6 +371,18 @@ export default function ClientDetailPage() {
                           }}>
                             <Download className="w-4 h-4 mr-2" />
                             PDF do Cabeçário
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            const clientPhone = client?.telefone || client?.celular || '';
+                            const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                            if (!success) {
+                              toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                            } else {
+                              toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                            }
+                          }}>
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Enviar via WhatsApp
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
