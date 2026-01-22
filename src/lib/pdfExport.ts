@@ -238,7 +238,7 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
   doc.save(`orcamento_${budget.id}_${budget.client_name.replace(/\s+/g, '_')}.pdf`);
 }
 
-export function exportMotorHeaderToPDF(budget: BudgetExpanded) {
+export function exportMotorHeaderToPDF(budget: BudgetExpanded, clientPhone?: string) {
   // Formato de etiqueta larga para impressora térmica
   // Tamanho: 100mm x 60mm (largura x altura) - formato paisagem
   const labelWidth = 100; // mm
@@ -288,10 +288,20 @@ export function exportMotorHeaderToPDF(budget: BudgetExpanded) {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   // Truncar nome se muito longo
-  const clientName = budget.client_name.length > 30
-    ? budget.client_name.substring(0, 30) + '...'
+  const clientName = budget.client_name.length > 25
+    ? budget.client_name.substring(0, 25) + '...'
     : budget.client_name;
-  doc.text(clientName, margin + 2, yPos + 5);
+  const nameX = margin + 2;
+  doc.text(clientName, nameX, yPos + 5);
+
+  // Adicionar telefone do cliente ao lado do nome com tamanho normal
+  if (clientPhone) {
+    const nameWidth = doc.getTextWidth(clientName);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(` - Fone: ${clientPhone}`, nameX + nameWidth + 2, yPos + 5);
+  }
 
   // Linha divisória
   yPos += 9;

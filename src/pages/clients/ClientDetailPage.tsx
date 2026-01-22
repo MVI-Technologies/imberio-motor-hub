@@ -364,7 +364,10 @@ export default function ClientDetailPage() {
                             <FileText className="w-4 h-4 mr-2" />
                             PDF do Orçamento
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => exportMotorHeaderToPDF(budget)}>
+                          <DropdownMenuItem onClick={() => {
+                            const clientPhone = client?.telefone || client?.celular || '';
+                            exportMotorHeaderToPDF(budget, clientPhone);
+                          }}>
                             <Download className="w-4 h-4 mr-2" />
                             PDF do Cabeçário
                           </DropdownMenuItem>

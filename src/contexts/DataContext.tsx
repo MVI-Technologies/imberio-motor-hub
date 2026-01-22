@@ -77,6 +77,10 @@ interface DataContextType {
     status?: 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado';
   }) => Promise<BudgetExpanded | null>;
   updateBudget: (id: string, budget: Partial<BudgetExpanded>) => Promise<void>;
+  updateBudgetMotor: (budgetId: string, motorData: Partial<Motor>) => Promise<boolean>;
+  addBudgetItem: (budgetId: string, item: { part_id: string; quantidade: number; valor_unitario: number }) => Promise<boolean>;
+  updateBudgetItem: (itemId: string, item: { quantidade: number; valor_unitario: number }) => Promise<boolean>;
+  removeBudgetItem: (budgetId: string, itemId: string) => Promise<boolean>;
   deleteBudget: (id: string) => Promise<boolean>;
   getBudgetsByClient: (clientId: string) => BudgetExpanded[];
   getBudget: (id: string) => BudgetExpanded | undefined;
@@ -451,6 +455,156 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setBudgets(prev => prev.map(b => b.id === id ? { ...b, ...budgetData } : b));
   };
 
+  const updateBudgetMotor = async (budgetId: string, motorData: Partial<Motor>): Promise<boolean> => {
+    const budget = budgets.find(b => b.id === budgetId);
+    if (!budget || !budget.motor?.id) return false;
+
+    const { id, created_at, ...updateData } = motorData as Motor;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('motors') as any)
+      .update(updateData)
+      .eq('id', budget.motor.id);
+
+    if (error) {
+      console.error('Erro ao atualizar motor:', error);
+      return false;
+    }
+
+    setBudgets(prev => prev.map(b => 
+      b.id === budgetId 
+        ? { ...b, motor: { ...b.motor, ...motorData } }
+        : b
+    ));
+    return true;
+  };
+
+  const addBudgetItem = async (budgetId: string, item: { part_id: string; quantidade: number; valor_unitario: number }): Promise<boolean> => {
+    const subtotal = item.quantidade * item.valor_unitario;
+    
+    const { data, error } = await supabase
+      .from('budget_items')
+      .insert({
+        budget_id: budgetId,
+        part_id: item.part_id,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+      } as any)
+      .select(`
+        *,
+        part:parts(*)
+      `)
+      .single();
+
+    if (error || !data) {
+      console.error('Erro ao adicionar item:', error);
+      return false;
+    }
+
+    const part = parts.find(p => p.id === item.part_id);
+    const newItem = {
+      id: (data as any).id,
+      part_id: item.part_id,
+      part_name: part?.nome || 'Peça não encontrada',
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario,
+      subtotal: Number((data as any).subtotal) || subtotal,
+    };
+
+    setBudgets(prev => prev.map(b => {
+      if (b.id === budgetId) {
+        const newItems = [...b.items, newItem];
+        const newTotal = newItems.reduce((sum, i) => sum + i.subtotal, 0);
+        return { ...b, items: newItems, valor_total: newTotal };
+      }
+      return b;
+    }));
+
+    // Atualizar valor total no banco
+    const budget = budgets.find(b => b.id === budgetId);
+    if (budget) {
+      const newTotal = budget.items.reduce((sum, i) => sum + i.subtotal, 0) + subtotal;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('budgets') as any)
+        .update({ valor_total: newTotal })
+        .eq('id', budgetId);
+    }
+
+    return true;
+  };
+
+  const updateBudgetItem = async (itemId: string, item: { quantidade: number; valor_unitario: number }): Promise<boolean> => {
+    const subtotal = item.quantidade * item.valor_unitario;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('budget_items') as any)
+      .update({
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+      })
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Erro ao atualizar item:', error);
+      return false;
+    }
+
+    let budgetToUpdate: BudgetExpanded | undefined;
+    
+    setBudgets(prev => prev.map(b => {
+      const itemIndex = b.items.findIndex(i => i.id === itemId);
+      if (itemIndex !== -1) {
+        const newItems = [...b.items];
+        newItems[itemIndex] = { ...newItems[itemIndex], ...item, subtotal };
+        const newTotal = newItems.reduce((sum, i) => sum + i.subtotal, 0);
+        budgetToUpdate = { ...b, items: newItems, valor_total: newTotal };
+        return budgetToUpdate;
+      }
+      return b;
+    }));
+
+    // Atualizar valor total no banco
+    if (budgetToUpdate) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('budgets') as any)
+        .update({ valor_total: budgetToUpdate.valor_total })
+        .eq('id', budgetToUpdate.id);
+    }
+
+    return true;
+  };
+
+  const removeBudgetItem = async (budgetId: string, itemId: string): Promise<boolean> => {
+    const { error } = await supabase
+      .from('budget_items')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Erro ao remover item:', error);
+      return false;
+    }
+
+    let newTotal = 0;
+    
+    setBudgets(prev => prev.map(b => {
+      if (b.id === budgetId) {
+        const newItems = b.items.filter(i => i.id !== itemId);
+        newTotal = newItems.reduce((sum, i) => sum + i.subtotal, 0);
+        return { ...b, items: newItems, valor_total: newTotal };
+      }
+      return b;
+    }));
+
+    // Atualizar valor total no banco
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('budgets') as any)
+      .update({ valor_total: newTotal })
+      .eq('id', budgetId);
+
+    return true;
+  };
+
   const deleteBudget = async (id: string): Promise<boolean> => {
     const budget = budgets.find(b => b.id === id);
     if (!budget) return false;
@@ -515,6 +669,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       refreshParts,
       addBudget,
       updateBudget,
+      updateBudgetMotor,
+      addBudgetItem,
+      updateBudgetItem,
+      removeBudgetItem,
       deleteBudget,
       getBudgetsByClient,
       getBudget,

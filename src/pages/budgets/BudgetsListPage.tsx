@@ -24,7 +24,7 @@ export default function BudgetsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { user } = useAuth();
-  const { budgets, isLoading } = useData();
+  const { budgets, isLoading, getClient } = useData();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -157,7 +157,11 @@ export default function BudgetsListPage() {
                             <FileText className="w-4 h-4 mr-2" />
                             PDF do Orçamento
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => exportMotorHeaderToPDF(budget)}>
+                          <DropdownMenuItem onClick={() => {
+                            const client = getClient(budget.client_id);
+                            const clientPhone = client?.telefone || client?.celular || '';
+                            exportMotorHeaderToPDF(budget, clientPhone);
+                          }}>
                             <Download className="w-4 h-4 mr-2" />
                             PDF do Cabeçário
                           </DropdownMenuItem>

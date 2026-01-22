@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
+import { useData, Motor } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
   Download, 
@@ -20,7 +21,9 @@ import {
   User,
   Calendar,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Pencil
 } from 'lucide-react';
 import { exportBudgetToPDF, exportMotorHeaderToPDF } from '@/lib/pdfExport';
 import {
@@ -40,12 +43,32 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 export default function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getBudget, updateBudget, deleteBudget, isLoading } = useData();
+  const { 
+    getBudget, 
+    updateBudget, 
+    deleteBudget, 
+    getClient, 
+    updateBudgetMotor,
+    addBudgetItem,
+    updateBudgetItem,
+    removeBudgetItem,
+    refreshBudgets,
+    parts,
+    isLoading 
+  } = useData();
   const navigate = useNavigate();
   
   const isAdmin = user?.role === 'admin';
@@ -54,13 +77,70 @@ export default function BudgetDetailPage() {
   const budget = getBudget(id || '');
   
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingMotor, setIsEditingMotor] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  
   const [editData, setEditData] = useState({
     laudo_tecnico: budget?.laudo_tecnico || '',
     observacoes: budget?.observacoes || '',
     status: budget?.status || 'pendente' as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado',
   });
+  
+  const [motorData, setMotorData] = useState<Partial<Motor>>({
+    equipamento: budget?.motor?.equipamento || '',
+    marca: budget?.motor?.marca || '',
+    modelo: budget?.motor?.modelo || '',
+    numero_serie: budget?.motor?.numero_serie || '',
+    cv: budget?.motor?.cv || '',
+    tensao: budget?.motor?.tensao || '',
+    rpm: budget?.motor?.rpm || '',
+    tipo: budget?.motor?.tipo || '',
+    passe: budget?.motor?.passe || '',
+    espiras: budget?.motor?.espiras || '',
+    fios: budget?.motor?.fios || '',
+    ligacao: budget?.motor?.ligacao || '',
+    diametro_externo: budget?.motor?.diametro_externo || '',
+    comprimento_externo: budget?.motor?.comprimento_externo || '',
+    original: budget?.motor?.original || false,
+  });
+  
+  const [newItem, setNewItem] = useState({
+    part_id: '',
+    quantidade: 1,
+    valor_unitario: 0,
+  });
+  
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+
+  // Atualizar estados quando o budget mudar
+  useEffect(() => {
+    if (budget) {
+      setEditData({
+        laudo_tecnico: budget.laudo_tecnico || '',
+        observacoes: budget.observacoes || '',
+        status: budget.status || 'pendente',
+      });
+      setMotorData({
+        equipamento: budget.motor?.equipamento || '',
+        marca: budget.motor?.marca || '',
+        modelo: budget.motor?.modelo || '',
+        numero_serie: budget.motor?.numero_serie || '',
+        cv: budget.motor?.cv || '',
+        tensao: budget.motor?.tensao || '',
+        rpm: budget.motor?.rpm || '',
+        tipo: budget.motor?.tipo || '',
+        passe: budget.motor?.passe || '',
+        espiras: budget.motor?.espiras || '',
+        fios: budget.motor?.fios || '',
+        ligacao: budget.motor?.ligacao || '',
+        diametro_externo: budget.motor?.diametro_externo || '',
+        comprimento_externo: budget.motor?.comprimento_externo || '',
+        original: budget.motor?.original || false,
+      });
+    }
+  }, [budget]);
 
   if (isLoading) {
     return (
@@ -98,17 +178,150 @@ export default function BudgetDetailPage() {
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setIsEditingMotor(false);
+    setIsAddingItem(false);
+    setEditingItemId(null);
     setEditData({
       laudo_tecnico: budget.laudo_tecnico || '',
       observacoes: budget.observacoes || '',
       status: budget.status || 'pendente',
     });
+    setMotorData({
+      equipamento: budget?.motor?.equipamento || '',
+      marca: budget?.motor?.marca || '',
+      modelo: budget?.motor?.modelo || '',
+      numero_serie: budget?.motor?.numero_serie || '',
+      cv: budget?.motor?.cv || '',
+      tensao: budget?.motor?.tensao || '',
+      rpm: budget?.motor?.rpm || '',
+      tipo: budget?.motor?.tipo || '',
+      passe: budget?.motor?.passe || '',
+      espiras: budget?.motor?.espiras || '',
+      fios: budget?.motor?.fios || '',
+      ligacao: budget?.motor?.ligacao || '',
+      diametro_externo: budget?.motor?.diametro_externo || '',
+      comprimento_externo: budget?.motor?.comprimento_externo || '',
+      original: budget?.motor?.original || false,
+    });
+    setNewItem({ part_id: '', quantidade: 1, valor_unitario: 0 });
   };
 
   const handleSaveEdit = async () => {
     await updateBudget(budget.id, editData);
     setIsEditing(false);
+    setIsEditingMotor(false);
+    setIsAddingItem(false);
+    setEditingItemId(null);
     toast.success('Orçamento atualizado com sucesso!');
+  };
+
+  const handleEditMotor = () => {
+    setMotorData({
+      equipamento: budget?.motor?.equipamento || '',
+      marca: budget?.motor?.marca || '',
+      modelo: budget?.motor?.modelo || '',
+      numero_serie: budget?.motor?.numero_serie || '',
+      cv: budget?.motor?.cv || '',
+      tensao: budget?.motor?.tensao || '',
+      rpm: budget?.motor?.rpm || '',
+      tipo: budget?.motor?.tipo || '',
+      passe: budget?.motor?.passe || '',
+      espiras: budget?.motor?.espiras || '',
+      fios: budget?.motor?.fios || '',
+      ligacao: budget?.motor?.ligacao || '',
+      diametro_externo: budget?.motor?.diametro_externo || '',
+      comprimento_externo: budget?.motor?.comprimento_externo || '',
+      original: budget?.motor?.original || false,
+    });
+    setIsEditingMotor(true);
+  };
+
+  const handleSaveMotor = async () => {
+    const success = await updateBudgetMotor(budget.id, motorData);
+    if (success) {
+      setIsEditingMotor(false);
+      await refreshBudgets();
+      toast.success('Dados do motor atualizados com sucesso!');
+    } else {
+      toast.error('Erro ao atualizar dados do motor');
+    }
+  };
+
+  const handleAddItem = () => {
+    setNewItem({ part_id: '', quantidade: 1, valor_unitario: 0 });
+    setIsAddingItem(true);
+  };
+
+  const handleSaveItem = async () => {
+    if (!newItem.part_id) {
+      toast.error('Selecione uma peça');
+      return;
+    }
+    if (newItem.quantidade <= 0) {
+      toast.error('Quantidade deve ser maior que zero');
+      return;
+    }
+    if (newItem.valor_unitario <= 0) {
+      toast.error('Valor unitário deve ser maior que zero');
+      return;
+    }
+    
+    const success = await addBudgetItem(budget.id, newItem);
+    if (success) {
+      setIsAddingItem(false);
+      setNewItem({ part_id: '', quantidade: 1, valor_unitario: 0 });
+      await refreshBudgets();
+      toast.success('Peça adicionada com sucesso!');
+    } else {
+      toast.error('Erro ao adicionar peça');
+    }
+  };
+
+  const handleEditItem = (itemId: string) => {
+    const item = budget.items.find(i => i.id === itemId);
+    if (item) {
+      setNewItem({
+        part_id: item.part_id,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+      });
+      setEditingItemId(itemId);
+    }
+  };
+
+  const handleUpdateItem = async () => {
+    if (!editingItemId) return;
+    if (newItem.quantidade <= 0) {
+      toast.error('Quantidade deve ser maior que zero');
+      return;
+    }
+    if (newItem.valor_unitario <= 0) {
+      toast.error('Valor unitário deve ser maior que zero');
+      return;
+    }
+    
+    const success = await updateBudgetItem(editingItemId, {
+      quantidade: newItem.quantidade,
+      valor_unitario: newItem.valor_unitario,
+    });
+    if (success) {
+      setEditingItemId(null);
+      setNewItem({ part_id: '', quantidade: 1, valor_unitario: 0 });
+      await refreshBudgets();
+      toast.success('Peça atualizada com sucesso!');
+    } else {
+      toast.error('Erro ao atualizar peça');
+    }
+  };
+
+  const handleRemoveItem = async (itemId: string) => {
+    const success = await removeBudgetItem(budget.id, itemId);
+    if (success) {
+      await refreshBudgets();
+      toast.success('Peça removida com sucesso!');
+    } else {
+      toast.error('Erro ao remover peça');
+    }
   };
 
   const handleDelete = async () => {
@@ -193,7 +406,11 @@ export default function BudgetDetailPage() {
                 <FileText className="w-4 h-4 mr-2" />
                 PDF do Orçamento
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportMotorHeaderToPDF(budget)}>
+              <DropdownMenuItem onClick={() => {
+                const client = getClient(budget.client_id);
+                const clientPhone = client?.telefone || client?.celular || '';
+                exportMotorHeaderToPDF(budget, clientPhone);
+              }}>
                 <Download className="w-4 h-4 mr-2" />
                 PDF do Cabeçário
               </DropdownMenuItem>
@@ -338,76 +555,237 @@ export default function BudgetDetailPage() {
 
         {/* Motor Data */}
         <div className="card-industrial">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Cog className="w-5 h-5 text-primary" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Cog className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Dados Técnicos do Motor</h3>
+                <p className="text-sm text-muted-foreground">Especificações do motor</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold">Dados Técnicos do Motor</h3>
-              <p className="text-sm text-muted-foreground">Especificações do motor</p>
-            </div>
+            {isEditing && !isEditingMotor && (
+              <Button variant="outline" size="sm" onClick={handleEditMotor}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Editar Motor
+              </Button>
+            )}
+            {isEditingMotor && (
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setIsEditingMotor(false);
+                  setMotorData({
+                    equipamento: budget?.motor?.equipamento || '',
+                    marca: budget?.motor?.marca || '',
+                    modelo: budget?.motor?.modelo || '',
+                    numero_serie: budget?.motor?.numero_serie || '',
+                    cv: budget?.motor?.cv || '',
+                    tensao: budget?.motor?.tensao || '',
+                    rpm: budget?.motor?.rpm || '',
+                    tipo: budget?.motor?.tipo || '',
+                    passe: budget?.motor?.passe || '',
+                    espiras: budget?.motor?.espiras || '',
+                    fios: budget?.motor?.fios || '',
+                    ligacao: budget?.motor?.ligacao || '',
+                    diametro_externo: budget?.motor?.diametro_externo || '',
+                    comprimento_externo: budget?.motor?.comprimento_externo || '',
+                    original: budget?.motor?.original || false,
+                  });
+                }}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={handleSaveMotor} className="btn-industrial-accent">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+              </div>
+            )}
           </div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Equipamento</p>
-              <p className="font-medium">{budget.motor?.equipamento || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Equipamento</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.equipamento || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, equipamento: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.equipamento || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Marca</p>
-              <p className="font-medium">{budget.motor?.marca || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Marca</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.marca || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, marca: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.marca || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Modelo</p>
-              <p className="font-medium">{budget.motor?.modelo || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Modelo</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.modelo || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, modelo: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.modelo || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Nº Série</p>
-              <p className="font-medium">{budget.motor?.numero_serie || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Série</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.numero_serie || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, numero_serie: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.numero_serie || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">CV</p>
-              <p className="font-medium">{budget.motor?.cv || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">CV</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.cv || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, cv: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.cv || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Tensão</p>
-              <p className="font-medium">{budget.motor?.tensao || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Tensão</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.tensao || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, tensao: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.tensao || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Passe</p>
-              <p className="font-medium">{budget.motor?.passe || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Passe</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.passe || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, passe: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.passe || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Espiras</p>
-              <p className="font-medium">{budget.motor?.espiras || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Espiras</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.espiras || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, espiras: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.espiras || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Nº Fios</p>
-              <p className="font-medium">{budget.motor?.fios || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Fios</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.fios || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, fios: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.fios || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Ligação</p>
-              <p className="font-medium">{budget.motor?.ligacao || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Ligação</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.ligacao || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, ligacao: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.ligacao || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">RPM</p>
-              <p className="font-medium">{budget.motor?.rpm || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">RPM</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.rpm || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, rpm: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.rpm || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Tipo</p>
-              <p className="font-medium">{budget.motor?.tipo || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Tipo</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.tipo || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, tipo: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.tipo || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Diâm. Externo</p>
-              <p className="font-medium">{budget.motor?.diametro_externo || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Diâm. Externo</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.diametro_externo || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, diametro_externo: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.diametro_externo || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Comp. Externo</p>
-              <p className="font-medium">{budget.motor?.comprimento_externo || '-'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Comp. Externo</Label>
+              {isEditingMotor ? (
+                <Input
+                  value={motorData.comprimento_externo || ''}
+                  onChange={(e) => setMotorData(prev => ({ ...prev, comprimento_externo: e.target.value }))}
+                  className="mt-1"
+                />
+              ) : (
+                <p className="font-medium">{budget.motor?.comprimento_externo || '-'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase mb-1">Original</p>
-              <p className="font-medium">{budget.motor?.original ? 'Sim' : 'Não'}</p>
+              <Label className="text-xs text-muted-foreground uppercase mb-1">Original</Label>
+              {isEditingMotor ? (
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    checked={motorData.original || false}
+                    onCheckedChange={(checked) => setMotorData(prev => ({ ...prev, original: checked === true }))}
+                  />
+                  <span className="text-sm">Sim</span>
+                </div>
+              ) : (
+                <p className="font-medium">{budget.motor?.original ? 'Sim' : 'Não'}</p>
+              )}
             </div>
           </div>
         </div>
@@ -431,7 +809,86 @@ export default function BudgetDetailPage() {
 
         {/* Items */}
         <div className="card-industrial">
-          <h3 className="text-lg font-semibold mb-4">Peças e Serviços</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Peças e Serviços</h3>
+            {isEditing && !isAddingItem && !editingItemId && (
+              <Button variant="outline" size="sm" onClick={handleAddItem}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Peça
+              </Button>
+            )}
+          </div>
+          
+          {(isAddingItem || editingItemId) && (
+            <div className="mb-4 p-4 rounded-lg bg-muted/50 border-2 border-dashed">
+              <h4 className="font-semibold mb-3">{editingItemId ? 'Editar Peça' : 'Nova Peça'}</h4>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Peça</Label>
+                  <Select
+                    value={newItem.part_id}
+                    onValueChange={(value) => {
+                      const part = parts.find(p => p.id === value);
+                      setNewItem(prev => ({
+                        ...prev,
+                        part_id: value,
+                        valor_unitario: part?.valor || 0,
+                      }));
+                    }}
+                    disabled={!!editingItemId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma peça" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parts.map(part => (
+                        <SelectItem key={part.id} value={part.id}>
+                          {part.nome} - R$ {part.valor.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Quantidade</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={newItem.quantidade}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, quantidade: parseInt(e.target.value) || 1 }))}
+                  />
+                </div>
+                <div>
+                  <Label>Valor Unitário</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newItem.valor_unitario}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, valor_unitario: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setIsAddingItem(false);
+                      setEditingItemId(null);
+                      setNewItem({ part_id: '', quantidade: 1, valor_unitario: 0 });
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={editingItemId ? handleUpdateItem : handleSaveItem}
+                    className="btn-industrial-accent"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {budget.items.length > 0 ? (
             <div className="overflow-x-auto">
@@ -442,6 +899,7 @@ export default function BudgetDetailPage() {
                     <th className="text-center">Qtd</th>
                     <th className="text-right">Valor Unit.</th>
                     <th className="text-right">Subtotal</th>
+                    {isEditing && <th className="text-center">Ações</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -451,12 +909,35 @@ export default function BudgetDetailPage() {
                       <td className="text-center">{item.quantidade}</td>
                       <td className="text-right font-mono">R$ {item.valor_unitario.toFixed(2)}</td>
                       <td className="text-right font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</td>
+                      {isEditing && (
+                        <td className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditItem(item.id)}
+                              disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem(item.id)}
+                              disabled={isAddingItem || editingItemId !== null}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={3} className="text-right font-semibold text-lg">TOTAL:</td>
+                    <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
                     <td className="text-right font-mono font-bold text-xl text-primary">
                       R$ {budget.valor_total.toFixed(2)}
                     </td>
