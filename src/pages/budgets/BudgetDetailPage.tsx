@@ -299,7 +299,7 @@ export default function BudgetDetailPage() {
 
   const handleSaveItem = async () => {
     if (!newItem.part_id) {
-      toast.error('Selecione uma peça');
+      toast.error('Selecione uma peça ou serviço');
       return;
     }
     if (newItem.quantidade <= 0) {
@@ -879,14 +879,14 @@ export default function BudgetDetailPage() {
             {isEditing && !isAddingItem && !editingItemId && (
               <Button variant="outline" size="sm" onClick={handleAddItem}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Peça
+                Adicionar Peça ou Serviço
               </Button>
             )}
           </div>
           
           {(isAddingItem || editingItemId) && (
             <div className="mb-4 p-3 sm:p-4 rounded-lg bg-muted/50 border-2 border-dashed">
-              <h4 className="font-semibold mb-3 text-sm sm:text-base">{editingItemId ? 'Editar Peça' : 'Nova Peça'}</h4>
+              <h4 className="font-semibold mb-3 text-sm sm:text-base">{editingItemId ? 'Editar Peça ou Serviço' : 'Nova Peça ou Serviço'}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="sm:col-span-2 lg:col-span-1">
                   <Label className="text-sm">Peça</Label>
@@ -902,16 +902,16 @@ export default function BudgetDetailPage() {
                         <span className="truncate">
                           {newItem.part_id
                             ? parts.find(p => p.id === newItem.part_id)?.nome
-                            : "Selecione uma peça"}
+                            : "Selecione uma peça ou serviço"}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0">
                       <Command>
-                        <CommandInput placeholder="Buscar peça..." />
+                        <CommandInput placeholder="Buscar peça ou serviço..." />
                         <CommandList>
-                          <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                          <CommandEmpty>Nenhuma peça ou serviço encontrado.</CommandEmpty>
                           <CommandGroup>
                             {parts.map(part => (
                               <CommandItem

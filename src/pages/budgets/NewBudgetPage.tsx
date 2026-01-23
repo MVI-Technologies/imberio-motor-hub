@@ -443,7 +443,7 @@ export default function NewBudgetPage() {
                 <Command>
                   <CommandInput placeholder="Buscar peça ou serviço..." />
                   <CommandList>
-                    <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                    <CommandEmpty>Nenhuma peça ou serviço encontrado.</CommandEmpty>
                     {Object.entries(partsByType).map(([tipo, items]) => (
                       <CommandGroup key={tipo} heading={tipo}>
                         {items.map(part => (
