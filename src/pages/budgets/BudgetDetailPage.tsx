@@ -541,42 +541,42 @@ export default function BudgetDetailPage() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header Info */}
-        <div className="grid md:grid-cols-4 gap-4">
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Cliente</p>
-              <p className="font-semibold">{budget.client_name}</p>
-            </div>
-          </div>
-          
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Data</p>
-              <p className="font-semibold">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">Cliente</p>
+              <p className="font-semibold text-sm sm:text-base truncate">{budget.client_name}</p>
             </div>
           </div>
           
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-primary" />
+          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">Data</p>
+              <p className="font-semibold text-sm sm:text-base">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+          
+          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">Status</p>
               {isEditing ? (
                 <Select 
                   value={editData.status} 
                   onValueChange={(v) => setEditData(prev => ({ ...prev, status: v as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado' }))}
                   disabled={getStatusOptions().length <= 1}
                 >
-                  <SelectTrigger className="h-8 w-36">
+                  <SelectTrigger className="h-8 w-full sm:w-36 mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -600,17 +600,17 @@ export default function BudgetDetailPage() {
             </div>
           </div>
           
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center">
-              <span className="text-xl font-bold text-accent">R$</span>
+          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+              <span className="text-lg sm:text-xl font-bold text-accent">R$</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Valor Total</p>
-              <p className="font-bold text-xl text-primary">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
+              <p className="font-bold text-lg sm:text-xl text-primary">
                 R$ {budget.valor_total.toFixed(2)}
                 {descontoPercentual > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground block">
-                    (com {descontoPercentual}% de desconto)
+                  <span className="text-xs sm:text-sm font-normal text-muted-foreground block">
+                    (com {descontoPercentual}% desc.)
                   </span>
                 )}
               </p>
@@ -885,27 +885,29 @@ export default function BudgetDetailPage() {
           </div>
           
           {(isAddingItem || editingItemId) && (
-            <div className="mb-4 p-4 rounded-lg bg-muted/50 border-2 border-dashed">
-              <h4 className="font-semibold mb-3">{editingItemId ? 'Editar Peça' : 'Nova Peça'}</h4>
-              <div className="grid md:grid-cols-4 gap-4">
-                <div>
-                  <Label>Peça</Label>
+            <div className="mb-4 p-3 sm:p-4 rounded-lg bg-muted/50 border-2 border-dashed">
+              <h4 className="font-semibold mb-3 text-sm sm:text-base">{editingItemId ? 'Editar Peça' : 'Nova Peça'}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <Label className="text-sm">Peça</Label>
                   <Popover open={partComboboxOpen} onOpenChange={setPartComboboxOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
                         aria-expanded={partComboboxOpen}
-                        className="w-full justify-between font-normal"
+                        className="w-full justify-between font-normal mt-1 h-10"
                         disabled={!!editingItemId}
                       >
-                        {newItem.part_id
-                          ? parts.find(p => p.id === newItem.part_id)?.nome
-                          : "Selecione uma peça"}
+                        <span className="truncate">
+                          {newItem.part_id
+                            ? parts.find(p => p.id === newItem.part_id)?.nome
+                            : "Selecione uma peça"}
+                        </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
+                    <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0">
                       <Command>
                         <CommandInput placeholder="Buscar peça..." />
                         <CommandList>
@@ -937,27 +939,31 @@ export default function BudgetDetailPage() {
                   </Popover>
                 </div>
                 <div>
-                  <Label>Quantidade</Label>
+                  <Label className="text-sm">Quantidade</Label>
                   <Input
                     type="number"
                     min="1"
                     value={newItem.quantidade}
                     onChange={(e) => setNewItem(prev => ({ ...prev, quantidade: parseInt(e.target.value) || 1 }))}
+                    className="mt-1 h-10"
                   />
                 </div>
                 <div>
-                  <Label>Valor Unitário</Label>
+                  <Label className="text-sm">Valor Unitário</Label>
                   <Input
                     type="number"
                     step="0.01"
                     min="0"
                     value={newItem.valor_unitario}
                     onChange={(e) => setNewItem(prev => ({ ...prev, valor_unitario: parseFloat(e.target.value) || 0 }))}
+                    className="mt-1 h-10"
                   />
                 </div>
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
                   <Button
                     variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
                     onClick={() => {
                       setIsAddingItem(false);
                       setEditingItemId(null);
@@ -968,9 +974,10 @@ export default function BudgetDetailPage() {
                   </Button>
                   <Button
                     onClick={editingItemId ? handleUpdateItem : handleSaveItem}
-                    className="btn-industrial-accent"
+                    className="btn-industrial-accent flex-1 sm:flex-none h-10"
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-4 h-4 mr-2" />
+                    <span className="sm:hidden lg:inline">Salvar</span>
                   </Button>
                 </div>
               </div>
@@ -978,80 +985,143 @@ export default function BudgetDetailPage() {
           )}
           
           {budget.items.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-industrial">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th className="text-center">Qtd</th>
-                    <th className="text-right">Valor Unit.</th>
-                    <th className="text-right">Subtotal</th>
-                    {isEditing && <th className="text-center">Ações</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {budget.items.map(item => (
-                    <tr key={item.id}>
-                      <td className="font-medium">{item.part_name}</td>
-                      <td className="text-center">{item.quantidade}</td>
-                      <td className="text-right font-mono">R$ {item.valor_unitario.toFixed(2)}</td>
-                      <td className="text-right font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</td>
+            <>
+              {/* Mobile View - Cards */}
+              <div className="md:hidden space-y-3">
+                {budget.items.map(item => (
+                  <div key={item.id} className="p-3 rounded-lg bg-muted/30 border border-border">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-medium text-sm flex-1">{item.part_name}</p>
                       {isEditing && (
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditItem(item.id)}
-                              disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem(item.id)}
-                              disabled={isAddingItem || editingItemId !== null}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditItem(item.id)}
+                            disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={isAddingItem || editingItemId !== null}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       )}
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4 text-muted-foreground">
+                        <span>Qtd: {item.quantidade}</span>
+                        <span>R$ {item.valor_unitario.toFixed(2)}/un</span>
+                      </div>
+                      <p className="font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Mobile Totals */}
+                <div className="pt-3 border-t border-border space-y-2">
                   {(descontoPercentual > 0 || (isEditing && hasDescontoEdit)) && (
                     <>
-                      <tr>
-                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold">
-                          Subtotal:
-                        </td>
-                        <td className="text-right font-mono font-semibold">
-                          R$ {subtotalValue.toFixed(2)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-destructive">
-                          Desconto ({descontoPercentual}%):
-                        </td>
-                        <td className="text-right font-mono font-semibold text-destructive">
-                          - R$ {descontoValue.toFixed(2)}
-                        </td>
-                      </tr>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-mono font-medium">R$ {subtotalValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-destructive">
+                        <span>Desconto ({descontoPercentual}%):</span>
+                        <span className="font-mono font-medium">- R$ {descontoValue.toFixed(2)}</span>
+                      </div>
                     </>
                   )}
-                  <tr>
-                    <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
-                    <td className="text-right font-mono font-bold text-xl text-primary">
-                      R$ {budget.valor_total.toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-semibold">TOTAL:</span>
+                    <span className="font-mono font-bold text-lg text-primary">R$ {budget.valor_total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table-industrial">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th className="text-center">Qtd</th>
+                      <th className="text-right">Valor Unit.</th>
+                      <th className="text-right">Subtotal</th>
+                      {isEditing && <th className="text-center">Ações</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {budget.items.map(item => (
+                      <tr key={item.id}>
+                        <td className="font-medium">{item.part_name}</td>
+                        <td className="text-center">{item.quantidade}</td>
+                        <td className="text-right font-mono">R$ {item.valor_unitario.toFixed(2)}</td>
+                        <td className="text-right font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</td>
+                        {isEditing && (
+                          <td className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditItem(item.id)}
+                                disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(item.id)}
+                                disabled={isAddingItem || editingItemId !== null}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    {(descontoPercentual > 0 || (isEditing && hasDescontoEdit)) && (
+                      <>
+                        <tr>
+                          <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold">
+                            Subtotal:
+                          </td>
+                          <td className="text-right font-mono font-semibold">
+                            R$ {subtotalValue.toFixed(2)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-destructive">
+                            Desconto ({descontoPercentual}%):
+                          </td>
+                          <td className="text-right font-mono font-semibold text-destructive">
+                            - R$ {descontoValue.toFixed(2)}
+                          </td>
+                        </tr>
+                      </>
+                    )}
+                    <tr>
+                      <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
+                      <td className="text-right font-mono font-bold text-xl text-primary">
+                        R$ {budget.valor_total.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
           ) : (
             <p className="text-muted-foreground text-center py-8">
               Nenhum item registrado neste orçamento.

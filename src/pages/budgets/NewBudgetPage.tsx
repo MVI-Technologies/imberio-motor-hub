@@ -469,85 +469,144 @@ export default function NewBudgetPage() {
           
           {/* Selected Items */}
           {selectedItems.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-industrial">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th className="text-center">Qtd</th>
-                    <th className="text-right">Valor Unit.</th>
-                    <th className="text-right">Subtotal</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedItems.map(item => (
-                    <tr key={item.id}>
-                      <td className="font-medium">{item.part_name}</td>
-                      <td className="text-center">
+            <>
+              {/* Mobile View - Cards */}
+              <div className="md:hidden space-y-3">
+                {selectedItems.map(item => (
+                  <div key={item.id} className="p-3 rounded-lg bg-muted/30 border border-border">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <p className="font-medium text-sm flex-1">{item.part_name}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
+                        onClick={() => handleRemoveItem(item.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground">Qtd:</Label>
                         <Input
                           type="number"
                           min="1"
                           value={item.quantidade}
                           onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)}
-                          className="w-20 h-9 text-center mx-auto"
+                          className="w-16 h-8 text-center text-sm"
                         />
-                      </td>
-                      <td className="text-right font-mono">
-                        R$ {item.valor_unitario.toFixed(2)}
-                      </td>
-                      <td className="text-right font-mono font-semibold">
-                        R$ {item.subtotal.toFixed(2)}
-                      </td>
-                      <td className="text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">R$ {item.valor_unitario.toFixed(2)}/un</p>
+                        <p className="font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Mobile Totals */}
+                <div className="pt-3 border-t border-border space-y-2">
                   {hasDesconto && descontoPercentual > 0 && (
                     <>
-                      <tr>
-                        <td colSpan={3} className="text-right font-semibold">
-                          Subtotal:
-                        </td>
-                        <td className="text-right font-mono font-semibold">
-                          R$ {subtotalValue.toFixed(2)}
-                        </td>
-                        <td></td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="text-right font-semibold text-destructive">
-                          Desconto ({descontoPercentual}%):
-                        </td>
-                        <td className="text-right font-mono font-semibold text-destructive">
-                          - R$ {descontoValue.toFixed(2)}
-                        </td>
-                        <td></td>
-                      </tr>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-mono font-medium">R$ {subtotalValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-destructive">
+                        <span>Desconto ({descontoPercentual}%):</span>
+                        <span className="font-mono font-medium">- R$ {descontoValue.toFixed(2)}</span>
+                      </div>
                     </>
                   )}
-                  <tr>
-                    <td colSpan={3} className="text-right font-semibold text-lg">
-                      TOTAL:
-                    </td>
-                    <td className="text-right font-mono font-bold text-xl text-primary">
-                      R$ {totalValue.toFixed(2)}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-semibold">TOTAL:</span>
+                    <span className="font-mono font-bold text-lg text-primary">R$ {totalValue.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table-industrial">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th className="text-center">Qtd</th>
+                      <th className="text-right">Valor Unit.</th>
+                      <th className="text-right">Subtotal</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedItems.map(item => (
+                      <tr key={item.id}>
+                        <td className="font-medium">{item.part_name}</td>
+                        <td className="text-center">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantidade}
+                            onChange={(e) => handleUpdateQuantity(item.id, parseInt(e.target.value) || 0)}
+                            className="w-20 h-9 text-center mx-auto"
+                          />
+                        </td>
+                        <td className="text-right font-mono">
+                          R$ {item.valor_unitario.toFixed(2)}
+                        </td>
+                        <td className="text-right font-mono font-semibold">
+                          R$ {item.subtotal.toFixed(2)}
+                        </td>
+                        <td className="text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    {hasDesconto && descontoPercentual > 0 && (
+                      <>
+                        <tr>
+                          <td colSpan={3} className="text-right font-semibold">
+                            Subtotal:
+                          </td>
+                          <td className="text-right font-mono font-semibold">
+                            R$ {subtotalValue.toFixed(2)}
+                          </td>
+                          <td></td>
+                        </tr>
+                        <tr>
+                          <td colSpan={3} className="text-right font-semibold text-destructive">
+                            Desconto ({descontoPercentual}%):
+                          </td>
+                          <td className="text-right font-mono font-semibold text-destructive">
+                            - R$ {descontoValue.toFixed(2)}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </>
+                    )}
+                    <tr>
+                      <td colSpan={3} className="text-right font-semibold text-lg">
+                        TOTAL:
+                      </td>
+                      <td className="text-right font-mono font-bold text-xl text-primary">
+                        R$ {totalValue.toFixed(2)}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
               <Plus className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -641,18 +700,19 @@ export default function NewBudgetPage() {
         </div>
 
         {/* Submit */}
-        <div className="flex items-center justify-between p-6 rounded-xl bg-muted/50 border border-border">
-          <div>
-            <p className="text-sm text-muted-foreground">Valor Total do Orçamento</p>
-            <p className="text-3xl font-bold text-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 sm:p-6 rounded-xl bg-muted/50 border border-border">
+          <div className="text-center sm:text-left">
+            <p className="text-xs sm:text-sm text-muted-foreground">Valor Total do Orçamento</p>
+            <p className="text-2xl sm:text-3xl font-bold text-primary">
               R$ {totalValue.toFixed(2)}
             </p>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button 
               type="button" 
               variant="outline"
+              className="order-3 sm:order-1"
               onClick={() => navigate(-1)}
             >
               Cancelar
@@ -662,16 +722,16 @@ export default function NewBudgetPage() {
               variant="outline"
               disabled={isSubmitting}
               onClick={(e) => handleSubmit(e, true)}
-              className="border-warning text-warning hover:bg-warning hover:text-warning-foreground"
+              className="order-2 border-warning text-warning hover:bg-warning hover:text-warning-foreground"
             >
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <span className="spinner" />
                   Salvando...
                 </span>
               ) : (
                 <>
-                  <Clock className="w-5 h-5" />
+                  <Clock className="w-5 h-5 mr-2" />
                   Salvar Pré-Orçamento
                 </>
               )}
@@ -679,16 +739,16 @@ export default function NewBudgetPage() {
             <Button 
               type="submit"
               disabled={isSubmitting || selectedItems.length === 0}
-              className="btn-industrial-accent btn-industrial-large"
+              className="order-1 sm:order-3 btn-industrial-accent"
             >
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <span className="spinner" />
                   Salvando...
                 </span>
               ) : (
                 <>
-                  <Save className="w-5 h-5" />
+                  <Save className="w-5 h-5 mr-2" />
                   Salvar Orçamento
                 </>
               )}

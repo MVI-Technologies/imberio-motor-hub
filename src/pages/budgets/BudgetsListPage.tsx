@@ -69,8 +69,8 @@ export default function BudgetsListPage() {
       subtitle={`${budgets.length} orçamentos registrados`}
     >
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <div className="flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="flex-1 sm:max-w-md">
           <div className="search-industrial">
             <Search className="w-5 h-5" />
             <input
@@ -83,9 +83,9 @@ export default function BudgetsListPage() {
         </div>
         
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
+          <Filter className="w-4 h-4 text-muted-foreground hidden sm:block" />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -99,103 +99,197 @@ export default function BudgetsListPage() {
         </div>
       </div>
 
-      {/* Budgets Table */}
+      {/* Budgets - Mobile Cards */}
       {filteredBudgets.length > 0 ? (
-        <div className="card-industrial overflow-x-auto">
-          <table className="table-industrial">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Cliente</th>
-                <th>Motor</th>
-                <th>Data</th>
-                <th className="text-right">Valor</th>
-                <th>Status</th>
-                <th className="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBudgets.map((budget) => (
-                <tr key={budget.id}>
-                  <td className="font-mono text-sm">
-                    #{budget.id.toUpperCase().substring(0, 6)}
-                  </td>
-                  <td className="font-medium">{budget.client_name}</td>
-                  <td className="text-muted-foreground">
-                    {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
-                  </td>
-                  <td className="text-muted-foreground">
-                    {new Date(budget.data).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="text-right font-mono font-semibold">
+        <>
+          {/* Mobile/Tablet View - Cards */}
+          <div className="lg:hidden space-y-3">
+            {filteredBudgets.map((budget) => (
+              <div 
+                key={budget.id} 
+                className="card-industrial p-4 cursor-pointer active:scale-[0.99] transition-transform"
+                onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-base truncate">{budget.client_name}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
+                    </p>
+                  </div>
+                  <span className={
+                    budget.status === 'baixado' ? 'badge-success text-xs' :
+                    budget.status === 'concluido' ? 'badge-warning text-xs' :
+                    budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                    'badge-pending text-xs'
+                  }>
+                    {budget.status === 'baixado' ? 'Baixado' :
+                     budget.status === 'concluido' ? 'Concluído' : 
+                     budget.status === 'pre_orcamento' ? 'Pré-Orç.' : 'Pendente'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="font-mono">#{budget.id.toUpperCase().substring(0, 6)}</span>
+                    <span>{new Date(budget.data).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <p className="font-mono font-bold text-base">
                     R$ {budget.valor_total.toFixed(2)}
-                  </td>
-                  <td>
-                    <span className={
-                      budget.status === 'baixado' ? 'badge-success' :
-                      budget.status === 'concluido' ? 'badge-warning' :
-                      budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                      'badge-pending'
-                    }>
-                      {budget.status === 'baixado' ? 'Baixado' :
-                       budget.status === 'concluido' ? 'Concluído' : 
-                       budget.status === 'pre_orcamento' ? 'Pré-Orçamento' : 'Pendente'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="btn-pdf"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
-                            <FileText className="w-4 h-4 mr-2" />
-                            PDF do Orçamento
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const client = getClient(budget.client_id);
-                            const clientPhone = client?.telefone || client?.celular || '';
-                            exportMotorHeaderToPDF(budget, clientPhone);
-                          }}>
-                            <Download className="w-4 h-4 mr-2" />
-                            PDF do Cabeçário
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const client = getClient(budget.client_id);
-                            const clientPhone = client?.telefone || client?.celular || '';
-                            const success = sendBudgetViaWhatsApp(budget, clientPhone);
-                            if (!success) {
-                              toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
-                            } else {
-                              toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
-                            }
-                          }}>
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Enviar via WhatsApp
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  </p>
+                </div>
+                <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-border">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                       <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm"
-                        onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
+                        className="h-9"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <Download className="w-4 h-4 mr-2" />
+                        Exportar
                       </Button>
-                    </div>
-                  </td>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); exportBudgetToPDF(budget); }}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        PDF do Orçamento
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        const client = getClient(budget.client_id);
+                        const clientPhone = client?.telefone || client?.celular || '';
+                        exportMotorHeaderToPDF(budget, clientPhone);
+                      }}>
+                        <Download className="w-4 h-4 mr-2" />
+                        PDF do Cabeçário
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        const client = getClient(budget.client_id);
+                        const clientPhone = client?.telefone || client?.celular || '';
+                        const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                        if (!success) {
+                          toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                        } else {
+                          toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                        }
+                      }}>
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Enviar via WhatsApp
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="h-9"
+                    onClick={(e) => { e.stopPropagation(); navigate(`${basePath}/orcamento/${budget.id}`); }}
+                  >
+                    Ver detalhes
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View - Table */}
+          <div className="hidden lg:block card-industrial overflow-x-auto">
+            <table className="table-industrial">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Cliente</th>
+                  <th>Motor</th>
+                  <th>Data</th>
+                  <th className="text-right">Valor</th>
+                  <th>Status</th>
+                  <th className="text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredBudgets.map((budget) => (
+                  <tr key={budget.id}>
+                    <td className="font-mono text-sm">
+                      #{budget.id.toUpperCase().substring(0, 6)}
+                    </td>
+                    <td className="font-medium">{budget.client_name}</td>
+                    <td className="text-muted-foreground">
+                      {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
+                    </td>
+                    <td className="text-muted-foreground">
+                      {new Date(budget.data).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="text-right font-mono font-semibold">
+                      R$ {budget.valor_total.toFixed(2)}
+                    </td>
+                    <td>
+                      <span className={
+                        budget.status === 'baixado' ? 'badge-success' :
+                        budget.status === 'concluido' ? 'badge-warning' :
+                        budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                        'badge-pending'
+                      }>
+                        {budget.status === 'baixado' ? 'Baixado' :
+                         budget.status === 'concluido' ? 'Concluído' : 
+                         budget.status === 'pre_orcamento' ? 'Pré-Orçamento' : 'Pendente'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="btn-pdf"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              PDF do Orçamento
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const client = getClient(budget.client_id);
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              exportMotorHeaderToPDF(budget, clientPhone);
+                            }}>
+                              <Download className="w-4 h-4 mr-2" />
+                              PDF do Cabeçário
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const client = getClient(budget.client_id);
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                              if (!success) {
+                                toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                              } else {
+                                toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                              }
+                            }}>
+                              <MessageCircle className="w-4 h-4 mr-2" />
+                              Enviar via WhatsApp
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       ) : (
         <div className="card-industrial text-center py-12">
           <p className="text-muted-foreground">

@@ -131,30 +131,35 @@ export default function ClientDetailPage() {
       title={client.nome}
       subtitle="Detalhes do cliente"
       actions={
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button variant="ghost" size="sm" className="hidden sm:flex" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          <Button variant="ghost" size="icon" className="sm:hidden" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <Button 
             variant="outline" 
+            size="sm"
             className="btn-pdf"
             onClick={handleExportClient}
           >
             <Download className="w-4 h-4" />
-            Exportar PDF
+            <span className="hidden sm:inline ml-2">Exportar PDF</span>
           </Button>
           <Button 
+            size="sm"
             className="btn-industrial-accent"
             onClick={handleNewBudget}
           >
             <FileText className="w-4 h-4" />
-            Novo Orçamento
+            <span className="hidden sm:inline ml-2">Novo Orçamento</span>
           </Button>
         </div>
       }
     >
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Client Info */}
         <div className="card-industrial">
           <div className="flex items-center justify-between mb-4">
@@ -304,7 +309,7 @@ export default function ClientDetailPage() {
 
         {/* Budget History */}
         <div className="lg:col-span-2 card-industrial">
-          <h3 className="text-lg font-semibold mb-4">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
             Histórico de Orçamentos ({budgets.length})
           </h3>
           
@@ -313,86 +318,163 @@ export default function ClientDetailPage() {
               {budgets.map((budget) => (
                 <div 
                   key={budget.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="p-3 sm:p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-mono text-sm text-muted-foreground">
-                        #{budget.id.toUpperCase().substring(0, 6)}
-                      </span>
-                      <span className={
-                        budget.status === 'baixado' ? 'badge-success' :
-                        budget.status === 'concluido' ? 'badge-warning' :
-                        budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                        'badge-pending'
-                      }>
-                        {budget.status === 'baixado' ? 'Baixado' :
-                         budget.status === 'concluido' ? 'Concluído' : 
-                         budget.status === 'pre_orcamento' ? 'Pré-Orçamento' : 'Pendente'}
-                      </span>
-                    </div>
-                    <p className="font-medium">
-                      {budget.motor?.marca || ''} {budget.motor?.modelo || ''} - {budget.motor?.cv || '-'} CV
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(budget.data).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-primary">
+                  {/* Mobile Layout */}
+                  <div className="sm:hidden">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          #{budget.id.toUpperCase().substring(0, 6)}
+                        </span>
+                        <span className={
+                          budget.status === 'baixado' ? 'badge-success text-xs' :
+                          budget.status === 'concluido' ? 'badge-warning text-xs' :
+                          budget.status === 'pre_orcamento' ? 'px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                          'badge-pending text-xs'
+                        }>
+                          {budget.status === 'baixado' ? 'Baixado' :
+                           budget.status === 'concluido' ? 'Concluído' : 
+                           budget.status === 'pre_orcamento' ? 'Pré-Orç.' : 'Pendente'}
+                        </span>
+                      </div>
+                      <p className="font-mono font-bold text-primary shrink-0">
                         R$ {budget.valor_total.toFixed(2)}
                       </p>
+                    </div>
+                    <p className="font-medium text-sm mb-1">
+                      {budget.motor?.marca || ''} {budget.motor?.modelo || ''} {budget.motor?.cv ? `- ${budget.motor.cv} CV` : ''}
+                    </p>
+                    <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">
-                        {budget.items.length} item(s)
+                        {new Date(budget.data).toLocaleDateString('pt-BR')} • {budget.items.length} item(s)
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              PDF do Orçamento
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              exportMotorHeaderToPDF(budget, clientPhone);
+                            }}>
+                              <Download className="w-4 h-4 mr-2" />
+                              PDF do Cabeçário
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                              if (!success) {
+                                toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                              } else {
+                                toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                              }
+                            }}>
+                              <MessageCircle className="w-4 h-4 mr-2" />
+                              Enviar via WhatsApp
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Layout */}
+                  <div className="hidden sm:flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="font-mono text-sm text-muted-foreground">
+                          #{budget.id.toUpperCase().substring(0, 6)}
+                        </span>
+                        <span className={
+                          budget.status === 'baixado' ? 'badge-success' :
+                          budget.status === 'concluido' ? 'badge-warning' :
+                          budget.status === 'pre_orcamento' ? 'px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                          'badge-pending'
+                        }>
+                          {budget.status === 'baixado' ? 'Baixado' :
+                           budget.status === 'concluido' ? 'Concluído' : 
+                           budget.status === 'pre_orcamento' ? 'Pré-Orçamento' : 'Pendente'}
+                        </span>
+                      </div>
+                      <p className="font-medium">
+                        {budget.motor?.marca || ''} {budget.motor?.modelo || ''} - {budget.motor?.cv || '-'} CV
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(budget.data).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="btn-pdf"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
-                            <FileText className="w-4 h-4 mr-2" />
-                            PDF do Orçamento
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const clientPhone = client?.telefone || client?.celular || '';
-                            exportMotorHeaderToPDF(budget, clientPhone);
-                          }}>
-                            <Download className="w-4 h-4 mr-2" />
-                            PDF do Cabeçário
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            const clientPhone = client?.telefone || client?.celular || '';
-                            const success = sendBudgetViaWhatsApp(budget, clientPhone);
-                            if (!success) {
-                              toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
-                            } else {
-                              toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
-                            }
-                          }}>
-                            <MessageCircle className="w-4 h-4 mr-2" />
-                            Enviar via WhatsApp
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-primary">
+                          R$ {budget.valor_total.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {budget.items.length} item(s)
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="btn-pdf"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => exportBudgetToPDF(budget)}>
+                              <FileText className="w-4 h-4 mr-2" />
+                              PDF do Orçamento
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              exportMotorHeaderToPDF(budget, clientPhone);
+                            }}>
+                              <Download className="w-4 h-4 mr-2" />
+                              PDF do Cabeçário
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const clientPhone = client?.telefone || client?.celular || '';
+                              const success = sendBudgetViaWhatsApp(budget, clientPhone);
+                              if (!success) {
+                                toast.error('Cliente não possui número de WhatsApp cadastrado ou número inválido.');
+                              } else {
+                                toast.success('WhatsApp aberto! O PDF foi baixado e pode ser anexado na conversa.');
+                              }
+                            }}>
+                              <MessageCircle className="w-4 h-4 mr-2" />
+                              Enviar via WhatsApp
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`${basePath}/orcamento/${budget.id}`)}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
