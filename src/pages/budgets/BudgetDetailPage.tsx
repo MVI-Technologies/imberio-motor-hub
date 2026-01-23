@@ -433,17 +433,22 @@ export default function BudgetDetailPage() {
       title={`Orçamento #${budget.id.toUpperCase().substring(0, 8)}`}
       subtitle={`Cliente: ${budget.client_name}`}
       actions={
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Voltar - ícone no mobile */}
+          <Button variant="ghost" size="sm" className="hidden sm:flex" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          <Button variant="ghost" size="icon" className="sm:hidden h-9 w-9" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           
+          {/* Exportar PDF */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="btn-pdf">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
+              <Button variant="outline" size="sm" className="btn-pdf h-9">
+                <Download className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exportar</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -481,31 +486,32 @@ export default function BudgetDetailPage() {
                 <Button 
                   onClick={handleConvertToOrcamento}
                   disabled={isConverting}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white h-9"
                 >
-                  {isConverting ? 'Convertendo...' : (
+                  {isConverting ? '...' : (
                     <>
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                      Converter em Orçamento
+                      <ArrowRight className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Converter</span>
                     </>
                   )}
                 </Button>
               )}
               
-              <Button variant="outline" onClick={handleEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
+              <Button variant="outline" size="sm" className="h-9" onClick={handleEdit}>
+                <Edit className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Editar</span>
               </Button>
               
               {isAdmin && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Excluir
+                    <Button variant="destructive" size="sm" className="h-9">
+                      <Trash2 className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Excluir</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Excluir Orçamento</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -528,13 +534,13 @@ export default function BudgetDetailPage() {
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={handleCancelEdit}>
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
+              <Button variant="ghost" size="sm" className="h-9" onClick={handleCancelEdit}>
+                <X className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Cancelar</span>
               </Button>
-              <Button onClick={handleSaveEdit} className="btn-industrial-accent">
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
+              <Button onClick={handleSaveEdit} size="sm" className="btn-industrial-accent h-9">
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Salvar</span>
               </Button>
             </>
           )}
@@ -543,40 +549,40 @@ export default function BudgetDetailPage() {
     >
       <div className="space-y-4 sm:space-y-6">
         {/* Header Info */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">Cliente</p>
-              <p className="font-semibold text-sm sm:text-base truncate">{budget.client_name}</p>
-            </div>
-          </div>
-          
-          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">Data</p>
-              <p className="font-semibold text-sm sm:text-base">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Cliente</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{budget.client_name}</p>
             </div>
           </div>
           
-          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">Status</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Data</p>
+              <p className="font-semibold text-xs sm:text-sm">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+          
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Status</p>
               {isEditing ? (
                 <Select 
                   value={editData.status} 
                   onValueChange={(v) => setEditData(prev => ({ ...prev, status: v as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado' }))}
                   disabled={getStatusOptions().length <= 1}
                 >
-                  <SelectTrigger className="h-8 w-full sm:w-36 mt-1">
+                  <SelectTrigger className="h-7 sm:h-8 w-full mt-1 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -595,22 +601,22 @@ export default function BudgetDetailPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                getStatusBadge(budget.status)
+                <div className="text-xs sm:text-sm">{getStatusBadge(budget.status)}</div>
               )}
             </div>
           </div>
           
-          <div className="card-industrial p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-              <span className="text-lg sm:text-xl font-bold text-accent">R$</span>
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+              <span className="text-sm sm:text-base font-bold text-accent">R$</span>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm text-muted-foreground">Valor Total</p>
-              <p className="font-bold text-lg sm:text-xl text-primary">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Total</p>
+              <p className="font-bold text-sm sm:text-lg text-primary">
                 R$ {budget.valor_total.toFixed(2)}
                 {descontoPercentual > 0 && (
-                  <span className="text-xs sm:text-sm font-normal text-muted-foreground block">
-                    (com {descontoPercentual}% desc.)
+                  <span className="text-[10px] sm:text-xs font-normal text-muted-foreground block">
+                    ({descontoPercentual}% desc.)
                   </span>
                 )}
               </p>
@@ -620,25 +626,25 @@ export default function BudgetDetailPage() {
 
         {/* Motor Data */}
         <div className="card-industrial">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Cog className="w-5 h-5 text-primary" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Cog className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Dados Técnicos do Motor</h3>
-                <p className="text-sm text-muted-foreground">Especificações do motor</p>
+                <h3 className="text-sm sm:text-lg font-semibold">Dados Técnicos do Motor</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Especificações do motor</p>
               </div>
             </div>
             {isEditing && !isEditingMotor && (
-              <Button variant="outline" size="sm" onClick={handleEditMotor}>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleEditMotor}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Editar Motor
               </Button>
             )}
             {isEditingMotor && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => {
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button variant="ghost" size="sm" className="flex-1 sm:flex-none" onClick={() => {
                   setIsEditingMotor(false);
                   setMotorData({
                     equipamento: budget?.motor?.equipamento || '',
@@ -658,188 +664,188 @@ export default function BudgetDetailPage() {
                     original: budget?.motor?.original || false,
                   });
                 }}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
+                  <X className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Cancelar</span>
                 </Button>
-                <Button size="sm" onClick={handleSaveMotor} className="btn-industrial-accent">
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar
+                <Button size="sm" className="flex-1 sm:flex-none btn-industrial-accent" onClick={handleSaveMotor}>
+                  <Save className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Salvar</span>
                 </Button>
               </div>
             )}
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Equipamento</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Equipamento</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.equipamento || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, equipamento: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.equipamento || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.equipamento || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Marca</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Marca</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.marca || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, marca: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.marca || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.marca || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Modelo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Modelo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.modelo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, modelo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.modelo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.modelo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Série</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Nº Série</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.numero_serie || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, numero_serie: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.numero_serie || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.numero_serie || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">CV</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">CV</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.cv || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, cv: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.cv || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.cv || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Tensão</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Tensão</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.tensao || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, tensao: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.tensao || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.tensao || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Passe</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Passe</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.passe || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, passe: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.passe || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.passe || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Espiras</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Espiras</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.espiras || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, espiras: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.espiras || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.espiras || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Fios</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Nº Fios</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.fios || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, fios: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.fios || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.fios || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Ligação</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Ligação</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.ligacao || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, ligacao: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.ligacao || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.ligacao || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">RPM</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">RPM</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.rpm || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, rpm: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.rpm || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.rpm || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Tipo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Tipo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.tipo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, tipo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.tipo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.tipo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Diâm. Externo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Diâm. Externo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.diametro_externo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, diametro_externo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.diametro_externo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.diametro_externo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Comp. Externo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Comp. Externo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.comprimento_externo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, comprimento_externo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.comprimento_externo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.comprimento_externo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Original</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Original</Label>
               {isEditingMotor ? (
                 <div className="flex items-center gap-2 mt-2">
                   <Checkbox
@@ -849,7 +855,7 @@ export default function BudgetDetailPage() {
                   <span className="text-sm">Sim</span>
                 </div>
               ) : (
-                <p className="font-medium">{budget.motor?.original ? 'Sim' : 'Não'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.original ? 'Sim' : 'Não'}</p>
               )}
             </div>
           </div>
