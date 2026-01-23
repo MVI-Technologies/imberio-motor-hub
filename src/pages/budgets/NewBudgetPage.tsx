@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -18,7 +20,9 @@ import {
   Trash2, 
   CheckCircle,
   Cog,
-  Clock
+  Clock,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -70,6 +74,7 @@ export default function NewBudgetPage() {
   
   const [selectedItems, setSelectedItems] = useState<LocalBudgetItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partComboboxOpen, setPartComboboxOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -422,25 +427,44 @@ export default function NewBudgetPage() {
           {/* Part Selector */}
           <div className="mb-6">
             <Label className="mb-2 block">Adicionar Item</Label>
-            <Select onValueChange={handleAddItem}>
-              <SelectTrigger className="h-11 w-full max-w-md">
-                <SelectValue placeholder="Selecione uma peça ou serviço" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(partsByType).map(([tipo, items]) => (
-                  <React.Fragment key={tipo}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase">
-                      {tipo}
-                    </div>
-                    {items.map(part => (
-                      <SelectItem key={part.id} value={part.id}>
-                        {part.nome} - R$ {part.valor.toFixed(2)}
-                      </SelectItem>
+            <Popover open={partComboboxOpen} onOpenChange={setPartComboboxOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={partComboboxOpen}
+                  className="h-11 w-full max-w-md justify-between font-normal"
+                >
+                  Selecione uma peça ou serviço
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar peça ou serviço..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                    {Object.entries(partsByType).map(([tipo, items]) => (
+                      <CommandGroup key={tipo} heading={tipo}>
+                        {items.map(part => (
+                          <CommandItem
+                            key={part.id}
+                            value={`${part.nome} ${tipo}`}
+                            onSelect={() => {
+                              handleAddItem(part.id);
+                              setPartComboboxOpen(false);
+                            }}
+                          >
+                            <Check className="mr-2 h-4 w-4 opacity-0" />
+                            {part.nome} - R$ {part.valor.toFixed(2)}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
                     ))}
-                  </React.Fragment>
-                ))}
-              </SelectContent>
-            </Select>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           
           {/* Selected Items */}

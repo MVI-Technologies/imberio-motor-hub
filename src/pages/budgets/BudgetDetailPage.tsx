@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
@@ -24,7 +26,9 @@ import {
   ArrowRight,
   Plus,
   Pencil,
-  MessageCircle
+  MessageCircle,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { exportBudgetToPDF, exportMotorHeaderToPDF, sendBudgetViaWhatsApp } from '@/lib/pdfExport';
 import {
@@ -87,6 +91,7 @@ export default function BudgetDetailPage() {
   const [isEditingMotor, setIsEditingMotor] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [partComboboxOpen, setPartComboboxOpen] = useState(false);
   
   const [editData, setEditData] = useState({
     laudo_tecnico: budget?.laudo_tecnico || '',
@@ -885,29 +890,51 @@ export default function BudgetDetailPage() {
               <div className="grid md:grid-cols-4 gap-4">
                 <div>
                   <Label>Peça</Label>
-                  <Select
-                    value={newItem.part_id}
-                    onValueChange={(value) => {
-                      const part = parts.find(p => p.id === value);
-                      setNewItem(prev => ({
-                        ...prev,
-                        part_id: value,
-                        valor_unitario: part?.valor || 0,
-                      }));
-                    }}
-                    disabled={!!editingItemId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma peça" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parts.map(part => (
-                        <SelectItem key={part.id} value={part.id}>
-                          {part.nome} - R$ {part.valor.toFixed(2)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={partComboboxOpen} onOpenChange={setPartComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={partComboboxOpen}
+                        className="w-full justify-between font-normal"
+                        disabled={!!editingItemId}
+                      >
+                        {newItem.part_id
+                          ? parts.find(p => p.id === newItem.part_id)?.nome
+                          : "Selecione uma peça"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar peça..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma peça encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {parts.map(part => (
+                              <CommandItem
+                                key={part.id}
+                                value={part.nome}
+                                onSelect={() => {
+                                  setNewItem(prev => ({
+                                    ...prev,
+                                    part_id: part.id,
+                                    valor_unitario: part.valor || 0,
+                                  }));
+                                  setPartComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${newItem.part_id === part.id ? "opacity-100" : "opacity-0"}`}
+                                />
+                                {part.nome} - R$ {part.valor.toFixed(2)}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label>Quantidade</Label>
