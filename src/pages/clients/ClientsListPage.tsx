@@ -58,7 +58,7 @@ export default function ClientsListPage() {
       }
     >
       {/* Search */}
-      <div className="max-w-md mb-8">
+      <div className="max-w-md mb-6 sm:mb-8">
         <div className="search-industrial">
           <Search className="w-5 h-5" />
           <input
@@ -71,7 +71,7 @@ export default function ClientsListPage() {
       </div>
 
       {/* Clients Grid */}
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         {filteredClients.map((client) => {
           const budgets = getBudgetsByClient(client.id);
           return (

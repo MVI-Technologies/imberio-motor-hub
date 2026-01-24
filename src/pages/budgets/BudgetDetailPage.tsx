@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
@@ -24,7 +26,9 @@ import {
   ArrowRight,
   Plus,
   Pencil,
-  MessageCircle
+  MessageCircle,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { exportBudgetToPDF, exportMotorHeaderToPDF, sendBudgetViaWhatsApp } from '@/lib/pdfExport';
 import {
@@ -87,6 +91,7 @@ export default function BudgetDetailPage() {
   const [isEditingMotor, setIsEditingMotor] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [partComboboxOpen, setPartComboboxOpen] = useState(false);
   
   const [editData, setEditData] = useState({
     laudo_tecnico: budget?.laudo_tecnico || '',
@@ -294,7 +299,7 @@ export default function BudgetDetailPage() {
 
   const handleSaveItem = async () => {
     if (!newItem.part_id) {
-      toast.error('Selecione uma peça');
+      toast.error('Selecione uma peça ou serviço');
       return;
     }
     if (newItem.quantidade <= 0) {
@@ -428,17 +433,22 @@ export default function BudgetDetailPage() {
       title={`Orçamento #${budget.id.toUpperCase().substring(0, 8)}`}
       subtitle={`Cliente: ${budget.client_name}`}
       actions={
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Voltar - ícone no mobile */}
+          <Button variant="ghost" size="sm" className="hidden sm:flex" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
+          <Button variant="ghost" size="icon" className="sm:hidden h-9 w-9" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           
+          {/* Exportar PDF */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="btn-pdf">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
+              <Button variant="outline" size="sm" className="btn-pdf h-9">
+                <Download className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exportar</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -476,31 +486,32 @@ export default function BudgetDetailPage() {
                 <Button 
                   onClick={handleConvertToOrcamento}
                   disabled={isConverting}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white h-9"
                 >
-                  {isConverting ? 'Convertendo...' : (
+                  {isConverting ? '...' : (
                     <>
-                      <ArrowRight className="w-4 h-4 mr-2" />
-                      Converter em Orçamento
+                      <ArrowRight className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Converter</span>
                     </>
                   )}
                 </Button>
               )}
               
-              <Button variant="outline" onClick={handleEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
+              <Button variant="outline" size="sm" className="h-9" onClick={handleEdit}>
+                <Edit className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Editar</span>
               </Button>
               
               {isAdmin && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Excluir
+                    <Button variant="destructive" size="sm" className="h-9">
+                      <Trash2 className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Excluir</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Excluir Orçamento</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -523,55 +534,55 @@ export default function BudgetDetailPage() {
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={handleCancelEdit}>
-                <X className="w-4 h-4 mr-2" />
-                Cancelar
+              <Button variant="ghost" size="sm" className="h-9" onClick={handleCancelEdit}>
+                <X className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Cancelar</span>
               </Button>
-              <Button onClick={handleSaveEdit} className="btn-industrial-accent">
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
+              <Button onClick={handleSaveEdit} size="sm" className="btn-industrial-accent h-9">
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Salvar</span>
               </Button>
             </>
           )}
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header Info */}
-        <div className="grid md:grid-cols-4 gap-4">
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Cliente</p>
-              <p className="font-semibold">{budget.client_name}</p>
-            </div>
-          </div>
-          
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Data</p>
-              <p className="font-semibold">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Cliente</p>
+              <p className="font-semibold text-xs sm:text-sm truncate">{budget.client_name}</p>
             </div>
           </div>
           
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-primary" />
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Status</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Data</p>
+              <p className="font-semibold text-xs sm:text-sm">{new Date(budget.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+          </div>
+          
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Status</p>
               {isEditing ? (
                 <Select 
                   value={editData.status} 
                   onValueChange={(v) => setEditData(prev => ({ ...prev, status: v as 'pre_orcamento' | 'pendente' | 'concluido' | 'baixado' }))}
                   disabled={getStatusOptions().length <= 1}
                 >
-                  <SelectTrigger className="h-8 w-36">
+                  <SelectTrigger className="h-7 sm:h-8 w-full mt-1 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,22 +601,22 @@ export default function BudgetDetailPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                getStatusBadge(budget.status)
+                <div className="text-xs sm:text-sm">{getStatusBadge(budget.status)}</div>
               )}
             </div>
           </div>
           
-          <div className="card-industrial flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center">
-              <span className="text-xl font-bold text-accent">R$</span>
+          <div className="card-industrial p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+              <span className="text-sm sm:text-base font-bold text-accent">R$</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Valor Total</p>
-              <p className="font-bold text-xl text-primary">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Valor Total</p>
+              <p className="font-bold text-sm sm:text-lg text-primary">
                 R$ {budget.valor_total.toFixed(2)}
                 {descontoPercentual > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground block">
-                    (com {descontoPercentual}% de desconto)
+                  <span className="text-[10px] sm:text-xs font-normal text-muted-foreground block">
+                    ({descontoPercentual}% desc.)
                   </span>
                 )}
               </p>
@@ -615,25 +626,25 @@ export default function BudgetDetailPage() {
 
         {/* Motor Data */}
         <div className="card-industrial">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Cog className="w-5 h-5 text-primary" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Cog className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Dados Técnicos do Motor</h3>
-                <p className="text-sm text-muted-foreground">Especificações do motor</p>
+                <h3 className="text-sm sm:text-lg font-semibold">Dados Técnicos do Motor</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Especificações do motor</p>
               </div>
             </div>
             {isEditing && !isEditingMotor && (
-              <Button variant="outline" size="sm" onClick={handleEditMotor}>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={handleEditMotor}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Editar Motor
               </Button>
             )}
             {isEditingMotor && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => {
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button variant="ghost" size="sm" className="flex-1 sm:flex-none" onClick={() => {
                   setIsEditingMotor(false);
                   setMotorData({
                     equipamento: budget?.motor?.equipamento || '',
@@ -653,188 +664,188 @@ export default function BudgetDetailPage() {
                     original: budget?.motor?.original || false,
                   });
                 }}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
+                  <X className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Cancelar</span>
                 </Button>
-                <Button size="sm" onClick={handleSaveMotor} className="btn-industrial-accent">
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar
+                <Button size="sm" className="flex-1 sm:flex-none btn-industrial-accent" onClick={handleSaveMotor}>
+                  <Save className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Salvar</span>
                 </Button>
               </div>
             )}
           </div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Equipamento</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Equipamento</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.equipamento || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, equipamento: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.equipamento || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.equipamento || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Marca</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Marca</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.marca || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, marca: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.marca || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.marca || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Modelo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Modelo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.modelo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, modelo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.modelo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.modelo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Série</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Nº Série</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.numero_serie || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, numero_serie: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.numero_serie || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.numero_serie || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">CV</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">CV</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.cv || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, cv: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.cv || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.cv || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Tensão</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Tensão</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.tensao || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, tensao: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.tensao || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.tensao || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Passe</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Passe</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.passe || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, passe: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.passe || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.passe || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Espiras</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Espiras</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.espiras || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, espiras: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.espiras || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.espiras || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Nº Fios</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Nº Fios</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.fios || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, fios: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.fios || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.fios || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Ligação</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Ligação</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.ligacao || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, ligacao: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.ligacao || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.ligacao || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">RPM</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">RPM</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.rpm || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, rpm: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.rpm || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.rpm || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Tipo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Tipo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.tipo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, tipo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.tipo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.tipo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Diâm. Externo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Diâm. Externo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.diametro_externo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, diametro_externo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.diametro_externo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.diametro_externo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Comp. Externo</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Comp. Externo</Label>
               {isEditingMotor ? (
                 <Input
                   value={motorData.comprimento_externo || ''}
                   onChange={(e) => setMotorData(prev => ({ ...prev, comprimento_externo: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                 />
               ) : (
-                <p className="font-medium">{budget.motor?.comprimento_externo || '-'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.comprimento_externo || '-'}</p>
               )}
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
-              <Label className="text-xs text-muted-foreground uppercase mb-1">Original</Label>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/50">
+              <Label className="text-[10px] sm:text-xs text-muted-foreground uppercase mb-1 block">Original</Label>
               {isEditingMotor ? (
                 <div className="flex items-center gap-2 mt-2">
                   <Checkbox
@@ -844,7 +855,7 @@ export default function BudgetDetailPage() {
                   <span className="text-sm">Sim</span>
                 </div>
               ) : (
-                <p className="font-medium">{budget.motor?.original ? 'Sim' : 'Não'}</p>
+                <p className="font-medium text-xs sm:text-sm truncate">{budget.motor?.original ? 'Sim' : 'Não'}</p>
               )}
             </div>
           </div>
@@ -874,63 +885,91 @@ export default function BudgetDetailPage() {
             {isEditing && !isAddingItem && !editingItemId && (
               <Button variant="outline" size="sm" onClick={handleAddItem}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar Peça
+                Adicionar Peça ou Serviço
               </Button>
             )}
           </div>
           
           {(isAddingItem || editingItemId) && (
-            <div className="mb-4 p-4 rounded-lg bg-muted/50 border-2 border-dashed">
-              <h4 className="font-semibold mb-3">{editingItemId ? 'Editar Peça' : 'Nova Peça'}</h4>
-              <div className="grid md:grid-cols-4 gap-4">
-                <div>
-                  <Label>Peça</Label>
-                  <Select
-                    value={newItem.part_id}
-                    onValueChange={(value) => {
-                      const part = parts.find(p => p.id === value);
-                      setNewItem(prev => ({
-                        ...prev,
-                        part_id: value,
-                        valor_unitario: part?.valor || 0,
-                      }));
-                    }}
-                    disabled={!!editingItemId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma peça" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parts.map(part => (
-                        <SelectItem key={part.id} value={part.id}>
-                          {part.nome} - R$ {part.valor.toFixed(2)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            <div className="mb-4 p-3 sm:p-4 rounded-lg bg-muted/50 border-2 border-dashed">
+              <h4 className="font-semibold mb-3 text-sm sm:text-base">{editingItemId ? 'Editar Peça ou Serviço' : 'Nova Peça ou Serviço'}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <Label className="text-sm">Peça</Label>
+                  <Popover open={partComboboxOpen} onOpenChange={setPartComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={partComboboxOpen}
+                        className="w-full justify-between font-normal mt-1 h-10"
+                        disabled={!!editingItemId}
+                      >
+                        <span className="truncate">
+                          {newItem.part_id
+                            ? parts.find(p => p.id === newItem.part_id)?.nome
+                            : "Selecione uma peça ou serviço"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar peça ou serviço..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma peça ou serviço encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {parts.map(part => (
+                              <CommandItem
+                                key={part.id}
+                                value={part.nome}
+                                onSelect={() => {
+                                  setNewItem(prev => ({
+                                    ...prev,
+                                    part_id: part.id,
+                                    valor_unitario: part.valor || 0,
+                                  }));
+                                  setPartComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${newItem.part_id === part.id ? "opacity-100" : "opacity-0"}`}
+                                />
+                                {part.nome} - R$ {part.valor.toFixed(2)}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
-                  <Label>Quantidade</Label>
+                  <Label className="text-sm">Quantidade</Label>
                   <Input
                     type="number"
                     min="1"
                     value={newItem.quantidade}
                     onChange={(e) => setNewItem(prev => ({ ...prev, quantidade: parseInt(e.target.value) || 1 }))}
+                    className="mt-1 h-10"
                   />
                 </div>
                 <div>
-                  <Label>Valor Unitário</Label>
+                  <Label className="text-sm">Valor Unitário</Label>
                   <Input
                     type="number"
                     step="0.01"
                     min="0"
                     value={newItem.valor_unitario}
                     onChange={(e) => setNewItem(prev => ({ ...prev, valor_unitario: parseFloat(e.target.value) || 0 }))}
+                    className="mt-1 h-10"
                   />
                 </div>
-                <div className="flex items-end gap-2">
+                <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
                   <Button
                     variant="ghost"
+                    size="icon"
+                    className="h-10 w-10"
                     onClick={() => {
                       setIsAddingItem(false);
                       setEditingItemId(null);
@@ -941,9 +980,10 @@ export default function BudgetDetailPage() {
                   </Button>
                   <Button
                     onClick={editingItemId ? handleUpdateItem : handleSaveItem}
-                    className="btn-industrial-accent"
+                    className="btn-industrial-accent flex-1 sm:flex-none h-10"
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-4 h-4 mr-2" />
+                    <span className="sm:hidden lg:inline">Salvar</span>
                   </Button>
                 </div>
               </div>
@@ -951,80 +991,143 @@ export default function BudgetDetailPage() {
           )}
           
           {budget.items.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-industrial">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th className="text-center">Qtd</th>
-                    <th className="text-right">Valor Unit.</th>
-                    <th className="text-right">Subtotal</th>
-                    {isEditing && <th className="text-center">Ações</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {budget.items.map(item => (
-                    <tr key={item.id}>
-                      <td className="font-medium">{item.part_name}</td>
-                      <td className="text-center">{item.quantidade}</td>
-                      <td className="text-right font-mono">R$ {item.valor_unitario.toFixed(2)}</td>
-                      <td className="text-right font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</td>
+            <>
+              {/* Mobile View - Cards */}
+              <div className="md:hidden space-y-3">
+                {budget.items.map(item => (
+                  <div key={item.id} className="p-3 rounded-lg bg-muted/30 border border-border">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-medium text-sm flex-1">{item.part_name}</p>
                       {isEditing && (
-                        <td className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditItem(item.id)}
-                              disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveItem(item.id)}
-                              disabled={isAddingItem || editingItemId !== null}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditItem(item.id)}
+                            disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={isAddingItem || editingItemId !== null}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       )}
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4 text-muted-foreground">
+                        <span>Qtd: {item.quantidade}</span>
+                        <span>R$ {item.valor_unitario.toFixed(2)}/un</span>
+                      </div>
+                      <p className="font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Mobile Totals */}
+                <div className="pt-3 border-t border-border space-y-2">
                   {(descontoPercentual > 0 || (isEditing && hasDescontoEdit)) && (
                     <>
-                      <tr>
-                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold">
-                          Subtotal:
-                        </td>
-                        <td className="text-right font-mono font-semibold">
-                          R$ {subtotalValue.toFixed(2)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-destructive">
-                          Desconto ({descontoPercentual}%):
-                        </td>
-                        <td className="text-right font-mono font-semibold text-destructive">
-                          - R$ {descontoValue.toFixed(2)}
-                        </td>
-                      </tr>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-mono font-medium">R$ {subtotalValue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-destructive">
+                        <span>Desconto ({descontoPercentual}%):</span>
+                        <span className="font-mono font-medium">- R$ {descontoValue.toFixed(2)}</span>
+                      </div>
                     </>
                   )}
-                  <tr>
-                    <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
-                    <td className="text-right font-mono font-bold text-xl text-primary">
-                      R$ {budget.valor_total.toFixed(2)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="font-semibold">TOTAL:</span>
+                    <span className="font-mono font-bold text-lg text-primary">R$ {budget.valor_total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table-industrial">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th className="text-center">Qtd</th>
+                      <th className="text-right">Valor Unit.</th>
+                      <th className="text-right">Subtotal</th>
+                      {isEditing && <th className="text-center">Ações</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {budget.items.map(item => (
+                      <tr key={item.id}>
+                        <td className="font-medium">{item.part_name}</td>
+                        <td className="text-center">{item.quantidade}</td>
+                        <td className="text-right font-mono">R$ {item.valor_unitario.toFixed(2)}</td>
+                        <td className="text-right font-mono font-semibold">R$ {item.subtotal.toFixed(2)}</td>
+                        {isEditing && (
+                          <td className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditItem(item.id)}
+                                disabled={isAddingItem || (editingItemId !== null && editingItemId !== item.id)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(item.id)}
+                                disabled={isAddingItem || editingItemId !== null}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    {(descontoPercentual > 0 || (isEditing && hasDescontoEdit)) && (
+                      <>
+                        <tr>
+                          <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold">
+                            Subtotal:
+                          </td>
+                          <td className="text-right font-mono font-semibold">
+                            R$ {subtotalValue.toFixed(2)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-destructive">
+                            Desconto ({descontoPercentual}%):
+                          </td>
+                          <td className="text-right font-mono font-semibold text-destructive">
+                            - R$ {descontoValue.toFixed(2)}
+                          </td>
+                        </tr>
+                      </>
+                    )}
+                    <tr>
+                      <td colSpan={isEditing ? 4 : 3} className="text-right font-semibold text-lg">TOTAL:</td>
+                      <td className="text-right font-mono font-bold text-xl text-primary">
+                        R$ {budget.valor_total.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
           ) : (
             <p className="text-muted-foreground text-center py-8">
               Nenhum item registrado neste orçamento.

@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       subtitle="Visão geral do sistema"
     >
       {/* Stats Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat) => (
           <div key={stat.label} className="stat-card">
             <div className="flex items-center justify-between">
@@ -192,20 +192,20 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Budget Status */}
         <div className="card-industrial">
-          <h3 className="text-lg font-semibold mb-4">Status dos Orçamentos</h3>
-          <div className="space-y-4">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Status dos Orçamentos</h3>
+          <div className="space-y-3 sm:space-y-4">
             {statusCards.map((status) => (
-              <div key={status.label} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${status.bgColor} flex items-center justify-center`}>
-                    <status.icon className={`w-5 h-5 ${status.color}`} />
+              <div key={status.label} className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg ${status.bgColor} flex items-center justify-center`}>
+                    <status.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${status.color}`} />
                   </div>
-                  <span className="font-medium">{status.label}</span>
+                  <span className="font-medium text-sm sm:text-base">{status.label}</span>
                 </div>
-                <span className={`text-2xl font-bold ${status.color}`}>{status.value}</span>
+                <span className={`text-xl sm:text-2xl font-bold ${status.color}`}>{status.value}</span>
               </div>
             ))}
           </div>
@@ -213,47 +213,82 @@ export default function AdminDashboard() {
 
         {/* Recent Budgets */}
         <div className="lg:col-span-2 card-industrial">
-          <h3 className="text-lg font-semibold mb-4">Orçamentos Recentes</h3>
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Orçamentos Recentes</h3>
           {recentBudgets.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-industrial">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Motor</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                    <th>Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentBudgets.map((budget) => (
-                    <tr key={budget.id}>
-                      <td className="font-medium">{budget.client_name}</td>
-                      <td className="text-muted-foreground">
-                        {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
-                      </td>
-                      <td className="font-mono">
-                        R$ {budget.valor_total.toFixed(2)}
-                      </td>
-                      <td>
-                        <span className={
-                          budget.status === 'baixado' ? 'badge-success' :
-                          budget.status === 'concluido' ? 'badge-warning' :
-                          'badge-pending'
-                        }>
-                          {budget.status === 'baixado' ? 'Baixado' :
-                           budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
-                        </span>
-                      </td>
-                      <td className="text-muted-foreground">
+            <>
+              {/* Mobile View - Cards */}
+              <div className="md:hidden space-y-3">
+                {recentBudgets.map((budget) => (
+                  <div key={budget.id} className="p-3 rounded-lg bg-muted/30 border border-border">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{budget.client_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
+                        </p>
+                      </div>
+                      <span className={
+                        budget.status === 'baixado' ? 'badge-success text-xs' :
+                        budget.status === 'concluido' ? 'badge-warning text-xs' :
+                        'badge-pending text-xs'
+                      }>
+                        {budget.status === 'baixado' ? 'Baixado' :
+                         budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
                         {new Date(budget.data).toLocaleDateString('pt-BR')}
-                      </td>
+                      </span>
+                      <span className="font-mono font-semibold">
+                        R$ {budget.valor_total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="table-industrial">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th>Motor</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <th>Data</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {recentBudgets.map((budget) => (
+                      <tr key={budget.id}>
+                        <td className="font-medium">{budget.client_name}</td>
+                        <td className="text-muted-foreground">
+                          {budget.motor?.marca || ''} {budget.motor?.modelo || ''}
+                        </td>
+                        <td className="font-mono">
+                          R$ {budget.valor_total.toFixed(2)}
+                        </td>
+                        <td>
+                          <span className={
+                            budget.status === 'baixado' ? 'badge-success' :
+                            budget.status === 'concluido' ? 'badge-warning' :
+                            'badge-pending'
+                          }>
+                            {budget.status === 'baixado' ? 'Baixado' :
+                             budget.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                          </span>
+                        </td>
+                        <td className="text-muted-foreground">
+                          {new Date(budget.data).toLocaleDateString('pt-BR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               Nenhum orçamento registrado ainda.
