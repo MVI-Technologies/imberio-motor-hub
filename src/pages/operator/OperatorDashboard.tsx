@@ -184,17 +184,7 @@ export default function OperatorDashboard() {
 
       {/* Empty State */}
       {!showResults && (
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-          <div className="card-industrial text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-              <Search className="w-8 h-8 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Buscar Cliente</h3>
-            <p className="text-muted-foreground text-sm">
-              Use a busca acima para encontrar clientes existentes e criar novos orçamentos
-            </p>
-          </div>
-          
+        <div className="max-w-4xl mx-auto">
           <div className="card-industrial text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
               <Plus className="w-8 h-8 text-accent" />
