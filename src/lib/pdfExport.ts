@@ -585,10 +585,10 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
 }
 
 export function exportMotorHeaderToPDF(budget: BudgetExpanded, clientPhone?: string) {
-  // Formato de etiqueta larga para impressora térmica
-  // Tamanho: 100mm x 60mm (largura x altura) - formato paisagem
-  const labelWidth = 100; // mm
-  const labelHeight = 60; // mm
+  // Formato de etiqueta pequena para impressora térmica
+  // Tamanho: 50mm x 30mm (largura x altura) - formato retangular (landscape)
+  const labelWidth = 50; // mm
+  const labelHeight = 30; // mm
 
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -599,139 +599,79 @@ export function exportMotorHeaderToPDF(budget: BudgetExpanded, clientPhone?: str
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  const margin = 3;
+  const margin = 1.5; // Margem bem pequena
   const motor = budget.motor;
+  const isPreOrcamento = budget.status === 'pre_orcamento';
 
   // Borda da etiqueta
   doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.3);
+  doc.setLineWidth(0.2);
   doc.rect(margin, margin, pageWidth - (margin * 2), pageHeight - (margin * 2), 'S');
 
-  // Header com fundo - cor diferente para pré-orçamento
-  const isPreOrcamento = budget.status === 'pre_orcamento';
-  if (isPreOrcamento) {
-    doc.setFillColor(200, 80, 0); // Laranja para pré-orçamento
-  } else {
-    doc.setFillColor(30, 30, 30); // Escuro para orçamento normal
-  }
-  doc.rect(margin, margin, pageWidth - (margin * 2), 10, 'F');
+  // Tipo no header (sem fundo colorido, apenas texto)
+  let yPos = margin + 2;
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'bold');
+  const headerTitle = isPreOrcamento ? 'PRÉ-ORÇAMENTO' : 'ORÇAMENTO';
+  doc.text(headerTitle, pageWidth / 2, yPos, { align: 'center' });
 
-  // Título - diferente para pré-orçamento
-  doc.setTextColor(255, 255, 255);
+  // Linha 1: Nome do cliente (maior destaque)
+  yPos += 4;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  const headerTitle = isPreOrcamento ? 'PRÉ-ORÇAMENTO - AGUARDANDO' : 'IDENTIFICAÇÃO DO MOTOR';
-  doc.text(headerTitle, pageWidth / 2, margin + 6.5, { align: 'center' });
-
-  // Linha 1: CLIENTE (grande e em destaque)
-  let yPos = margin + 15;
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('CLIENTE:', margin + 2, yPos);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  // Truncar nome se muito longo
-  const clientName = budget.client_name.length > 25
-    ? budget.client_name.substring(0, 25) + '...'
+  
+  // Truncar nome se muito longo (máximo ~35 caracteres para 50mm em landscape)
+  const maxNameLength = 35;
+  const clientName = budget.client_name.length > maxNameLength
+    ? budget.client_name.substring(0, maxNameLength) + '...'
     : budget.client_name;
-  const nameX = margin + 2;
-  doc.text(clientName, nameX, yPos + 5);
+  
+  doc.text(clientName, pageWidth / 2, yPos, { align: 'center', maxWidth: pageWidth - (margin * 2) });
 
-  // Adicionar telefone do cliente ao lado do nome com tamanho normal
+  // Linha 2: Telefone
+  yPos += 4;
   if (clientPhone) {
-    const nameWidth = doc.getTextWidth(clientName);
-    doc.setFontSize(11);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(` - Fone: ${clientPhone}`, nameX + nameWidth + 2, yPos + 5);
+    doc.setTextColor(60, 60, 60);
+    // Formatar telefone se necessário
+    const formattedPhone = clientPhone.length > 20 
+      ? clientPhone.substring(0, 20) + '...'
+      : clientPhone;
+    doc.text(`Tel: ${formattedPhone}`, pageWidth / 2, yPos, { align: 'center' });
   }
 
-  // Linha divisória
-  yPos += 9;
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.2);
-  doc.line(margin + 2, yPos, pageWidth - margin - 2, yPos);
-
-  // Linha 2: NÚMERO e MODELO lado a lado
-  yPos += 4;
-
-  // Número do orçamento (lado esquerdo)
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Nº:', margin + 2, yPos);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  const shortId = budget.id.toUpperCase().substring(0, 8);
-  doc.text(shortId, margin + 2, yPos + 5);
-
-  // Modelo do motor (lado direito)
-  const midPoint = pageWidth / 2;
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('MOTOR:', midPoint, yPos);
-
+  // Linha 3: Modelo do motor (se couber)
+  yPos += 3.5;
   const motorModel = [
     motor?.marca,
     motor?.modelo
   ].filter(Boolean).join(' ') || '-';
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  const truncatedMotor = motorModel.length > 20
-    ? motorModel.substring(0, 20) + '...'
-    : motorModel;
-  doc.text(truncatedMotor, midPoint, yPos + 5);
+  if (motorModel && motorModel !== '-') {
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Motor:', margin + 2, yPos);
+    
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    // Truncar modelo se muito longo (máximo ~30 caracteres em landscape)
+    const maxMotorLength = 30;
+    const truncatedMotor = motorModel.length > maxMotorLength
+      ? motorModel.substring(0, maxMotorLength) + '...'
+      : motorModel;
+    doc.text(truncatedMotor, margin + 2, yPos + 3);
+  }
 
-  // Linha divisória
-  yPos += 9;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin + 2, yPos, pageWidth - margin - 2, yPos);
-
-  // Linha 3: CV, Tipo e Data
-  yPos += 4;
-
-  // CV
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
+  // Linha 4: Número do orçamento (canto inferior direito)
+  const shortId = budget.id.toUpperCase().substring(0, 6);
+  doc.setFontSize(5);
   doc.setFont('helvetica', 'normal');
-  doc.text('CV:', margin + 2, yPos);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(motor?.cv || '-', margin + 2, yPos + 4);
-
-  // Tipo
-  const col2 = margin + 25;
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('TIPO:', col2, yPos);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text(motor?.tipo || '-', col2, yPos + 4);
-
-  // Data
-  const col3 = pageWidth - margin - 25;
-  doc.setTextColor(80, 80, 80);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('DATA:', col3, yPos);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text(new Date(budget.data).toLocaleDateString('pt-BR'), col3, yPos + 4);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`#${shortId}`, pageWidth - margin - 1, pageHeight - margin - 0.5, { align: 'right' });
 
   // Save
   doc.save(`etiqueta_motor_${budget.id}_${budget.client_name.replace(/\s+/g, '_')}.pdf`);
