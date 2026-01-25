@@ -60,10 +60,10 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
   
   // Configurações responsivas
   const config = {
-    headerHeight: 25, // Altura fixa de 25mm
-    headerWidth: 50, // Largura de 50mm
-    headerFontSize: [20, 18, 16, 14][compactLevel],
-    headerSubFontSize: [9, 8, 7, 7][compactLevel],
+    headerHeight: 26, // Altura fixa de 26mm
+    headerWidth: 51, // Largura de 51mm
+    headerFontSize: [22, 20, 18, 16][compactLevel], // Aumentado
+    headerSubFontSize: [10, 9, 8, 8][compactLevel], // Aumentado
     sectionTitleSize: [12, 11, 10, 9][compactLevel],
     motorFontSize: [8, 8, 7, 7][compactLevel],
     motorPadding: [2.5, 2, 1.8, 1.5][compactLevel],
@@ -74,7 +74,7 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
     signatureSpacing: [35, 30, 25, 20][compactLevel],
   };
 
-  // Header com background - 25mm altura, 50mm largura
+  // Header com background - 26mm altura, 51mm largura
   doc.setFillColor(26, 54, 71);
   doc.rect(0, 0, config.headerWidth, config.headerHeight, 'F');
 
@@ -89,6 +89,36 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
   doc.text(COMPANY_SUBTITLE, margin, config.headerHeight * 0.52);
   doc.text(`Fone: ${COMPANY_PHONE}`, margin, config.headerHeight * 0.68);
   doc.text(COMPANY_ADDRESS, margin, config.headerHeight * 0.85);
+
+  // Potência e polos do motor (se disponível)
+  const motor = budget.motor;
+  if (motor?.cv) {
+    let potenciaInfo = `${motor.cv} cv`;
+    // Tentar extrair polos do campo tipo ou rpm
+    // Exemplo: se tipo contém "4 polos" ou rpm indica 4 polos
+    const tipoLower = motor.tipo?.toLowerCase() || '';
+    const rpmValue = motor.rpm ? parseInt(motor.rpm) : null;
+    
+    // Extrair polos do campo tipo se contiver "polos" ou número seguido de "p"
+    const polosMatch = tipoLower.match(/(\d+)\s*(?:polos?|p)/);
+    let polos = polosMatch ? polosMatch[1] : null;
+    
+    // Se não encontrou nos polos, tentar calcular pelo RPM (aproximado)
+    // RPM típicos: 2 polos ~3600rpm, 4 polos ~1800rpm, 6 polos ~1200rpm
+    if (!polos && rpmValue) {
+      if (rpmValue >= 3000) polos = '2';
+      else if (rpmValue >= 1500) polos = '4';
+      else if (rpmValue >= 1000) polos = '6';
+    }
+    
+    if (polos) {
+      potenciaInfo += ` ${polos} polos`;
+    }
+    
+    doc.setFontSize(config.headerSubFontSize);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Potência: ${potenciaInfo}`, margin, config.headerHeight * 0.95);
+  }
 
   // Data no canto direito
   doc.setFontSize(config.headerSubFontSize + 1);
@@ -111,7 +141,7 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
   doc.text('DADOS DO MOTOR', margin, yPos);
 
   yPos += 3;
-  const motor = budget.motor;
+  // motor já foi declarado acima no cabeçalho
   
   const motorFields: { label: string; value: string }[] = [];
   if (motor?.equipamento) motorFields.push({ label: 'Equipamento', value: motor.equipamento });
@@ -363,10 +393,10 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
   
   // Configurações responsivas baseadas no nível de compactação
   const config = {
-    headerHeight: 25, // Altura fixa de 25mm
-    headerWidth: 50, // Largura de 50mm
-    headerFontSize: [20, 18, 16, 14][compactLevel],
-    headerSubFontSize: [9, 8, 7, 7][compactLevel],
+    headerHeight: 26, // Altura fixa de 26mm
+    headerWidth: 51, // Largura de 51mm
+    headerFontSize: [22, 20, 18, 16][compactLevel], // Aumentado
+    headerSubFontSize: [10, 9, 8, 8][compactLevel], // Aumentado
     sectionTitleSize: [12, 11, 10, 9][compactLevel],
     motorFontSize: [8, 8, 7, 7][compactLevel],
     motorPadding: [2.5, 2, 1.8, 1.5][compactLevel],
@@ -377,7 +407,7 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
     signatureSpacing: [35, 30, 25, 20][compactLevel],
   };
 
-  // Header com background - 25mm altura, 50mm largura
+  // Header com background - 26mm altura, 51mm largura
   doc.setFillColor(26, 54, 71);
   doc.rect(0, 0, config.headerWidth, config.headerHeight, 'F');
 
@@ -392,6 +422,36 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
   doc.text(COMPANY_SUBTITLE, margin, config.headerHeight * 0.52);
   doc.text(`Fone: ${COMPANY_PHONE}`, margin, config.headerHeight * 0.68);
   doc.text(COMPANY_ADDRESS, margin, config.headerHeight * 0.85);
+
+  // Potência e polos do motor (se disponível)
+  const motor = budget.motor;
+  if (motor?.cv) {
+    let potenciaInfo = `${motor.cv} cv`;
+    // Tentar extrair polos do campo tipo ou rpm
+    // Exemplo: se tipo contém "4 polos" ou rpm indica 4 polos
+    const tipoLower = motor.tipo?.toLowerCase() || '';
+    const rpmValue = motor.rpm ? parseInt(motor.rpm) : null;
+    
+    // Extrair polos do campo tipo se contiver "polos" ou número seguido de "p"
+    const polosMatch = tipoLower.match(/(\d+)\s*(?:polos?|p)/);
+    let polos = polosMatch ? polosMatch[1] : null;
+    
+    // Se não encontrou nos polos, tentar calcular pelo RPM (aproximado)
+    // RPM típicos: 2 polos ~3600rpm, 4 polos ~1800rpm, 6 polos ~1200rpm
+    if (!polos && rpmValue) {
+      if (rpmValue >= 3000) polos = '2';
+      else if (rpmValue >= 1500) polos = '4';
+      else if (rpmValue >= 1000) polos = '6';
+    }
+    
+    if (polos) {
+      potenciaInfo += ` ${polos} polos`;
+    }
+    
+    doc.setFontSize(config.headerSubFontSize);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Potência: ${potenciaInfo}`, margin, config.headerHeight * 0.95);
+  }
 
   // Data no canto direito
   doc.setFontSize(config.headerSubFontSize + 1);
@@ -414,7 +474,7 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
   doc.text('DADOS DO MOTOR', margin, yPos);
 
   yPos += 3;
-  const motor = budget.motor;
+  // motor já foi declarado acima no cabeçalho
   
   // Criar lista de campos do motor apenas com valores não nulos/vazios
   const motorFields: { label: string; value: string }[] = [];
