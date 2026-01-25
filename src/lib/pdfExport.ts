@@ -60,7 +60,8 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
   
   // Configurações responsivas
   const config = {
-    headerHeight: [45, 40, 35, 32][compactLevel],
+    headerHeight: 25, // Altura fixa de 25mm
+    headerWidth: 50, // Largura de 50mm
     headerFontSize: [20, 18, 16, 14][compactLevel],
     headerSubFontSize: [9, 8, 7, 7][compactLevel],
     sectionTitleSize: [12, 11, 10, 9][compactLevel],
@@ -73,9 +74,9 @@ function generateBudgetPDFDoc(budget: BudgetExpanded): jsPDF {
     signatureSpacing: [35, 30, 25, 20][compactLevel],
   };
 
-  // Header com background
+  // Header com background - 25mm altura, 50mm largura
   doc.setFillColor(26, 54, 71);
-  doc.rect(0, 0, pageWidth, config.headerHeight, 'F');
+  doc.rect(0, 0, config.headerWidth, config.headerHeight, 'F');
 
   // Company Info
   doc.setTextColor(255, 255, 255);
@@ -362,7 +363,8 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
   
   // Configurações responsivas baseadas no nível de compactação
   const config = {
-    headerHeight: [45, 40, 35, 32][compactLevel],
+    headerHeight: 25, // Altura fixa de 25mm
+    headerWidth: 50, // Largura de 50mm
     headerFontSize: [20, 18, 16, 14][compactLevel],
     headerSubFontSize: [9, 8, 7, 7][compactLevel],
     sectionTitleSize: [12, 11, 10, 9][compactLevel],
@@ -375,9 +377,9 @@ export function exportBudgetToPDF(budget: BudgetExpanded) {
     signatureSpacing: [35, 30, 25, 20][compactLevel],
   };
 
-  // Header com background
+  // Header com background - 25mm altura, 50mm largura
   doc.setFillColor(26, 54, 71);
-  doc.rect(0, 0, pageWidth, config.headerHeight, 'F');
+  doc.rect(0, 0, config.headerWidth, config.headerHeight, 'F');
 
   // Company Info
   doc.setTextColor(255, 255, 255);
