@@ -462,7 +462,7 @@ export default function BudgetDetailPage() {
                 exportMotorHeaderToPDF(budget, clientPhone);
               }}>
                 <Download className="w-4 h-4 mr-2" />
-                PDF do Cabeçário
+                PDF da Etiqueta
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 const client = getClient(budget.client_id);

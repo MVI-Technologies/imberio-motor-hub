@@ -366,7 +366,7 @@ export default function ClientDetailPage() {
                               exportMotorHeaderToPDF(budget, clientPhone);
                             }}>
                               <Download className="w-4 h-4 mr-2" />
-                              PDF do Cabeçário
+                              PDF da Etiqueta
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               const clientPhone = client?.telefone || client?.celular || '';
@@ -451,7 +451,7 @@ export default function ClientDetailPage() {
                               exportMotorHeaderToPDF(budget, clientPhone);
                             }}>
                               <Download className="w-4 h-4 mr-2" />
-                              PDF do Cabeçário
+                              PDF da Etiqueta
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                               const clientPhone = client?.telefone || client?.celular || '';

@@ -697,7 +697,15 @@ export function exportMotorHeaderToPDF(budget: BudgetExpanded, clientPhone?: str
     doc.text(`Potência: ${potenciaInfo}`, margin + 1.5, yPos);
   }
 
-  // Linha 4: Número do orçamento (canto inferior direito)
+  // Linha 5: Data de entrada (se disponível)
+  yPos += 3;
+  const dataEntrada = new Date(budget.data).toLocaleDateString('pt-BR');
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Entrada: ${dataEntrada}`, margin + 1.5, yPos);
+
+  // Linha 6: Número do orçamento (canto inferior direito)
   const shortId = budget.id.toUpperCase().substring(0, 6);
   doc.setFontSize(5);
   doc.setFont('helvetica', 'normal');
